@@ -6,15 +6,19 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional, List, Literal
+import os
+import signal
 
 from .task import TaskMetadata, TaskResult
 from .lean_checker import find_lean_files, check_lean_files_parallel
 from .mcp_stats import analyze_mcp_log, get_mcp_log_path
-from .statement_tracker import StatementTracker, RoundResult
+from .statement_tracker import StatementTracker, RoundResult, extract_claude_usage
 
 # Enable line buffering for real-time output when redirecting to file
 sys.stdout.reconfigure(line_buffering=True)
@@ -39,36 +43,80 @@ def run_claude_once(
     args: List[str],
     env: Optional[dict] = None,
     cwd: Optional[Path] = None,
-) -> tuple[str, Optional[str], int]:
+    json_save_path: Optional[Path] = None,
+) -> tuple[Optional[str], int, Optional[dict]]:
     """
-    Execute a single claude command.
+    Execute a single claude command with stream-json output.
+
+    Claude output is redirected directly to a file (no stdout pipe forwarding).
+    If json_save_path is not provided, a tmp file with random uuid is used.
+    Parses the final `type: "result"` line for END_REASON, usage info, and result
+    text. Only the result text is printed to stdout.
 
     Args:
         args: Claude command arguments list
         env: Environment variables (MCP_LOG_NAME should be set here)
         cwd: Working directory
+        json_save_path: Path to save the raw NDJSON stream (.jsonl file)
 
     Returns:
-        (stdout, end_reason, returncode)
-        end_reason: "COMPLETE" | "LIMIT" | None
+        (end_reason, returncode, claude_result)
+        end_reason: "COMPLETE" | "LIMIT" | "SELECTED_TARGET_COMPLETE" | None
+        claude_result: Parsed dict from the final type:"result" JSON line, or None
     """
-    kwargs = {
-        "text": True,
-        "capture_output": True,
-    }
-    if env:
-        kwargs["env"] = env
-    if cwd:
-        kwargs["cwd"] = str(cwd)
+    if json_save_path is None:
+        tmp_name = f"claude_raw_{uuid.uuid4().hex}.jsonl"
+        json_save_path = Path(tempfile.gettempdir()) / tmp_name
 
-    cp = subprocess.run(args, **kwargs)
-    out = cp.stdout
-    sys.stdout.write(out)
-    sys.stdout.flush()
+    json_save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    m = PAT_REASON.search(out)
-    reason = m.group(1).upper() if m else None
-    return out, reason, cp.returncode
+    with open(json_save_path, "w", encoding="utf-8") as stdout_target:
+        proc = subprocess.Popen(
+            args,
+            stdout=stdout_target,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env or None,
+            cwd=str(cwd) if cwd else None,
+        )
+        proc.wait()
+    current_pid = os.getpid()
+    env_info = env or {}
+    print(
+        f"[info] Claude pid={proc.pid}, runner pid={current_pid},\n"
+        f"one-click kill command: kill -TERM {current_pid} -- -{proc.pid}\n"
+        f"MCP_LOG_DIR: {env_info.get('MCP_LOG_DIR')}\n"
+        f"MCP_LOG_NAME: {env_info.get('MCP_LOG_NAME')}"
+    )
+
+    last_line = ""
+    try:
+        with open(json_save_path, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if line.strip():
+                    last_line = line
+    except OSError:
+        pass
+
+    claude_result = None
+    reason = None
+    last_line = last_line.strip()
+    if last_line:
+        try:
+            parsed = json.loads(last_line)
+            if parsed.get("type") == "result":
+                claude_result = parsed
+                result_text = parsed.get("result", "")
+                sys.stdout.write(result_text)
+                sys.stdout.write("\n")
+                sys.stdout.flush()
+                m = PAT_REASON.search(result_text)
+                reason = m.group(1).upper() if m else None
+        except json.JSONDecodeError:
+            pass
+
+    time.sleep(0.5)
+    return reason, proc.returncode, claude_result
 
 
 def commit_round(round_num: int, cwd: Optional[Path] = None):
@@ -125,18 +173,25 @@ def run_claude_session(
     """
     print(f"[info] Using prompt:\n{prompt[:120]}{'...' if len(prompt) > 120 else ''}\n")
 
-    # Build base command
-    base = ["claude", "-p"]
-    if output_format:
-        base += ["--output-format", output_format]
+    # Build base command (always use --verbose --output-format stream-json)
+    base = ["claude", "-p", "--verbose", "--output-format", "stream-json"]
     if permission_mode:
         base += ["--permission-mode", permission_mode]
 
     round_results: List[RoundResult] = []
     statement_error = False
     initial_line_counts = get_line_counts(files_to_track) if files_to_track else {}
+    last_claude_result: Optional[dict] = None
 
-    def record_round(round_num: int, stdout: str, reason: Optional[str], returncode: int, duration: float) -> RoundResult:
+    def _get_json_save_path(round_num: int) -> Optional[Path]:
+        """Compute the NDJSON save path for a round."""
+        if result_dir and task_id:
+            p = result_dir / task_id / "claude_raw"
+            p.mkdir(parents=True, exist_ok=True)
+            return p / f"round_{round_num}.jsonl"
+        return None
+
+    def record_round(round_num: int, reason: Optional[str], returncode: int, duration: float, claude_result: Optional[dict] = None) -> RoundResult:
         """Record a round result and check for statement changes."""
         nonlocal statement_error
 
@@ -145,12 +200,12 @@ def run_claude_session(
 
         result = RoundResult(
             round_number=round_num,
-            stdout=stdout,
             end_reason=reason,
             returncode=returncode,
             statement_changes=changes,
             duration_seconds=duration,
             line_counts=line_counts,
+            claude_usage=extract_claude_usage(claude_result),
         )
         round_results.append(result)
 
@@ -212,9 +267,12 @@ def run_claude_session(
 
     # First call: new session
     round_start = time.time()
-    stdout, reason, returncode = run_claude_once(base + [prompt], env=env, cwd=cwd)
+    reason, returncode, claude_result = run_claude_once(
+        base + [prompt], env=env, cwd=cwd, json_save_path=_get_json_save_path(1),
+    )
     round_duration = time.time() - round_start
-    record_round(1, stdout, reason, returncode, round_duration)
+    last_claude_result = claude_result
+    record_round(1, reason, returncode, round_duration, claude_result)
     if git_commit_dir:
         commit_round(1, git_commit_dir)
 
@@ -249,9 +307,12 @@ def run_claude_session(
                     print("[info] Verification failed, resending prompt...")
                     rounds += 1
                     round_start = time.time()
-                    stdout, reason, returncode = run_claude_once(base + [prompt], env=env, cwd=cwd)
+                    reason, returncode, claude_result = run_claude_once(
+                        base + [prompt], env=env, cwd=cwd, json_save_path=_get_json_save_path(rounds),
+                    )
                     round_duration = time.time() - round_start
-                    record_round(rounds, stdout, reason, returncode, round_duration)
+                    last_claude_result = claude_result
+                    record_round(rounds, reason, returncode, round_duration, claude_result)
                     if git_commit_dir:
                         commit_round(rounds, git_commit_dir)
                     if statement_error:
@@ -274,22 +335,25 @@ def run_claude_session(
         round_start = time.time()
         if reason is None:
             print("[info] No END_REASON detected, continuing with prompt...")
-            stdout, reason, returncode = run_claude_once(base + [prompt], env=env, cwd=cwd)
+            reason, returncode, claude_result = run_claude_once(
+                base + [prompt], env=env, cwd=cwd, json_save_path=_get_json_save_path(rounds),
+            )
         elif should_reset_session:
             print(f"[info] Resetting session after {consecutive_limits} consecutive LIMITs...")
-            stdout, reason, returncode = run_claude_once(base + [prompt], env=env, cwd=cwd)
-            consecutive_limits = 0  # Reset counter after starting new session
+            reason, returncode, claude_result = run_claude_once(
+                base + [prompt], env=env, cwd=cwd, json_save_path=_get_json_save_path(rounds),
+            )
+            consecutive_limits = 0
         else:
-            # Continue the same session
-            cmd = ["claude", "-c", "-p"]
-            if output_format:
-                cmd += ["--output-format", output_format]
+            cmd = ["claude", "-c", "-p", "--verbose", "--output-format", "stream-json"]
             if permission_mode:
                 cmd += ["--permission-mode", permission_mode]
-            stdout, reason, returncode = run_claude_once(cmd + ["continue"], env=env, cwd=cwd)
+            reason, returncode, claude_result = run_claude_once(
+                cmd + ["continue"], env=env, cwd=cwd, json_save_path=_get_json_save_path(rounds),
+            )
         round_duration = time.time() - round_start
-
-        record_round(rounds, stdout, reason, returncode, round_duration)
+        last_claude_result = claude_result
+        record_round(rounds, reason, returncode, round_duration, claude_result)
         if git_commit_dir:
             commit_round(rounds, git_commit_dir)
         if statement_error:
@@ -474,6 +538,10 @@ def run_task(task: TaskMetadata) -> TaskResult:
     print(f"  Duration: {result.duration_seconds:.1f}s")
     if statement_changed:
         print(f"  Statement changed: Yes")
+    if result.total_cost_usd > 0:
+        usage = result.total_usage
+        print(f"  Total cost: ${result.total_cost_usd:.4f}")
+        print(f"  Tokens: {usage['input_tokens']} in / {usage['output_tokens']} out / {usage['cache_read_input_tokens']} cache_read / {usage['cache_creation_input_tokens']} cache_create")
 
     # Save final result to JSON if result_dir is specified
     # (Individual round results are already saved immediately during execution)

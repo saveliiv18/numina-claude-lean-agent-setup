@@ -134,16 +134,33 @@ class StatementTracker:
         return self.initial_snapshots.copy()
 
 
+def extract_claude_usage(claude_result: Optional[dict]) -> Optional[dict]:
+    """Extract usage/cost info from a parsed type:'result' JSON dict."""
+    if not claude_result or claude_result.get("type") != "result":
+        return None
+    usage = claude_result.get("usage", {})
+    return {
+        "total_cost_usd": claude_result.get("total_cost_usd"),
+        "input_tokens": usage.get("input_tokens", 0),
+        "output_tokens": usage.get("output_tokens", 0),
+        "cache_read_input_tokens": usage.get("cache_read_input_tokens", 0),
+        "cache_creation_input_tokens": usage.get("cache_creation_input_tokens", 0),
+        "num_turns": claude_result.get("num_turns"),
+        "duration_api_ms": claude_result.get("duration_api_ms"),
+        "session_id": claude_result.get("session_id"),
+    }
+
+
 @dataclass
 class RoundResult:
     """Result of a single run_claude_once call."""
     round_number: int
-    stdout: str
     end_reason: Optional[str]  # COMPLETE / LIMIT / None
     returncode: int
     statement_changes: List[StatementChange] = field(default_factory=list)
-    duration_seconds: float = 0.0  # Duration of this round
+    duration_seconds: float = 0.0
     line_counts: dict = field(default_factory=dict)  # {filename: line_count}
+    claude_usage: Optional[dict] = None  # Token/cost info from stream-json result
 
     def has_statement_changes(self) -> bool:
         """Check if any statements were changed in this round."""
@@ -167,4 +184,5 @@ class RoundResult:
                 for c in self.statement_changes
             ],
             "line_counts": self.line_counts,
+            "claude_usage": self.claude_usage,
         }
