@@ -38,6 +38,8 @@ class ClaudeRunner:
         mcp_log_name: Optional[str] = None,
         permission_mode: str = "bypassPermissions",
         json_output: bool = False,
+        safe_verify_path: Optional[str] = None,
+        safe_verify_cwd: Optional[str] = None,
     ) -> int:
         """
         Run a single task.
@@ -62,6 +64,10 @@ class ClaudeRunner:
         Examples:
             # Single file
             python -m scripts.run_claude run /path/to/file.lean --prompt-file prompt.txt
+
+            # With SafeVerify
+            python -m scripts.run_claude run /path/to/file.lean --prompt-file prompt.txt \\
+                --safe-verify-path /path/to/safe_verify
 
             # Folder
             python -m scripts.run_claude run /path/to/folder --task-type folder --prompt "..."
@@ -96,6 +102,8 @@ class ClaudeRunner:
             mcp_log_name=mcp_log_name,
             permission_mode=permission_mode,
             output_format="json" if json_output else None,
+            safe_verify_path=safe_verify_path,
+            safe_verify_cwd=safe_verify_cwd,
         )
 
         # Run task
@@ -191,6 +199,8 @@ class ClaudeRunner:
         permission_mode: str = "bypassPermissions",
         parallel: bool = False,
         max_workers: int = 1,
+        safe_verify_path: Optional[str] = None,
+        safe_verify_cwd: Optional[str] = None,
     ) -> int:
         """
         Generate and run tasks from a folder (one task per .lean file).
@@ -248,6 +258,8 @@ class ClaudeRunner:
                 result_dir=result_dir,
                 mcp_log_name=lean_file.stem,
                 permission_mode=permission_mode,
+                safe_verify_path=safe_verify_path,
+                safe_verify_cwd=safe_verify_cwd,
             )
             tasks.append(task)
 
@@ -270,6 +282,10 @@ class ClaudeRunner:
         print(f"Duration: {result.duration_seconds:.1f}s")
         if result.error_message:
             print(f"Error: {result.error_message}")
+        if result.safe_verify_result and result.safe_verify_result.ran:
+            sv = result.safe_verify_result
+            sv_status = "PASSED" if sv.success else "FAILED"
+            print(f"SafeVerify: {sv_status}")
 
         # Print line count changes
         self._print_line_changes(result)

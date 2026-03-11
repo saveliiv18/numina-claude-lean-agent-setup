@@ -15,6 +15,7 @@ from .task import TaskMetadata, TaskResult
 from .lean_checker import find_lean_files, check_lean_files_parallel
 from .mcp_stats import analyze_mcp_log, get_mcp_log_path
 from .statement_tracker import StatementTracker, RoundResult
+from .safe_verify import snapshot_target, run_safe_verify, SafeVerifyResult
 
 # Enable line buffering for real-time output when redirecting to file
 sys.stdout.reconfigure(line_buffering=True)
@@ -319,6 +320,8 @@ def run_task(task: TaskMetadata) -> TaskResult:
     mcp_stats = None
     round_results: List[RoundResult] = []
     statement_changed = False
+    safe_verify_result: Optional[SafeVerifyResult] = None
+    sv_target_path: Optional[Path] = None  # Snapshot of original .lean (with sorry)
 
     try:
         # Get prompt
@@ -335,6 +338,13 @@ def run_task(task: TaskMetadata) -> TaskResult:
             files_to_track = [task.target_path]
         else:
             files_to_track = find_lean_files(task.target_path)
+
+        # Snapshot the original file for SafeVerify (before the agent modifies it).
+        # Must be inside the project directory so lake env lean accepts it.
+        if task.safe_verify_path and task.task_type == "file":
+            sv_target_path = task.target_path.parent / f"{task.target_path.stem}__sv_target{task.target_path.suffix}"
+            snapshot_target(task.target_path, sv_target_path)
+            print(f"[info] SafeVerify: snapshotted target to {sv_target_path}")
 
         # Initialize statement tracker if enabled
         tracker = None
@@ -443,6 +453,41 @@ def run_task(task: TaskMetadata) -> TaskResult:
             print(f"[info] Generating MCP stats to {stats_dir}")
             mcp_stats = analyze_mcp_log(str(mcp_log_path), str(stats_dir))
 
+        # Run SafeVerify if configured (file tasks only) and if the proof compiled
+        if task.safe_verify_path and task.task_type == "file" and sv_target_path:
+            if end_reason == "COMPLETE":
+                print(f"\n[info] Running SafeVerify.")
+                sv_cwd = task.safe_verify_cwd or task.cwd
+                if sv_cwd is None:
+                    sv_cwd = task.target_path.parent
+                try:
+                    safe_verify_result = run_safe_verify(
+                        target_lean=sv_target_path,
+                        submission_lean=task.target_path,
+                        safe_verify_bin=Path(task.safe_verify_path),
+                        cwd=Path(sv_cwd),
+                    )
+                finally:
+                    # Always clean up the snapshot file
+                    try:
+                        sv_target_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+
+                _sv_status = "PASSED" if safe_verify_result.success else "FAILED"
+                print(f"[info] SafeVerify: {_sv_status} (exit {safe_verify_result.returncode})")
+                if safe_verify_result.error_message:
+                    print(f"[warn] SafeVerify error: {safe_verify_result.error_message}")
+                if safe_verify_result.output.strip():
+                    print(safe_verify_result.output)
+            else:
+                # Proof didn't compile: skip SafeVerify, just clean up snapshot
+                print(f"\n[info] SafeVerify: skipped (end_reason={end_reason}, proof did not compile)")
+                try:
+                    sv_target_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
+
         success = end_reason == "COMPLETE"
 
     except Exception as e:
@@ -465,6 +510,7 @@ def run_task(task: TaskMetadata) -> TaskResult:
         mcp_stats=mcp_stats,
         round_results=round_results,
         statement_changed=statement_changed,
+        safe_verify_result=safe_verify_result,
     )
 
     print(f"\n[info] Task {task.task_id} completed:")
