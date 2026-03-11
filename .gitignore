@@ -7,3 +7,5 @@ experiments/
 *.env.claude/
 
 .claude/
+.venv
+projects

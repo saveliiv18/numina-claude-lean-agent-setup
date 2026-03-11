@@ -7,6 +7,9 @@ set -e
 
 PROJECT_NAME="${1:-leanproblems}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")/projects"
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR"
 
 echo "========================================"
 echo "Lean + Claude Code Quick Setup"
@@ -70,7 +73,7 @@ fi
 chmod +x "$MCP_DIR/numina-lean-mcp.sh"
 
 # Add MCP to Claude Code (from project directory)
-cd "$SCRIPT_DIR/$PROJECT_NAME" 2>/dev/null || cd "$PROJECT_NAME"
+cd "$PROJECT_DIR/$PROJECT_NAME" 2>/dev/null || cd "$PROJECT_NAME"
 echo "Adding MCP server to Claude Code..."
 claude mcp remove lean-lsp 2>/dev/null || true
 claude mcp add lean-lsp -- "$MCP_DIR/numina-lean-mcp.sh"
@@ -84,7 +87,8 @@ echo "To verify installation:"
 echo "  claude mcp list"
 echo ""
 echo "To start working:"
-echo "  cd $PROJECT_NAME"
+echo "  cd $PROJECT_DIR/$PROJECT_NAME"
 echo "  claude"
 echo ""
 echo "For more details, see: tutorial/setup.md"
+echo "========================================"

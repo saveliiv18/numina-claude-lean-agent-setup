@@ -6,18 +6,6 @@ This guide helps you quickly set up a Lean + Claude Code development environment
 
 ## Quick Start
 
-### Option 1: Use the script
-
-```bash
-git clone https://github.com/project-numina/numina-lean-agent
-cd numina-lean-agent/tutorial
-./setup.sh myproject
-```
-
-See [setup.sh](./setup.sh) for details.
-
-### Option 2: Manual commands
-
 ```bash
 # Install elan
 curl https://elan.lean-lang.org/elan-init.sh -sSf | sh
