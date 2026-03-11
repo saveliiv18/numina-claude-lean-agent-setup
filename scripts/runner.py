@@ -517,6 +517,9 @@ def run_task(task: TaskMetadata) -> TaskResult:
     print(f"  Success: {result.success}")
     print(f"  End reason: {result.end_reason}")
     print(f"  Rounds used: {result.rounds_used}")
+    if safe_verify_result and safe_verify_result.ran:
+        sv_status = "PASSED" if safe_verify_result.success else "FAILED"
+        print(f"  SafeVerify: {sv_status}")
     print(f"  Duration: {result.duration_seconds:.1f}s")
     if statement_changed:
         print(f"  Statement changed: Yes")

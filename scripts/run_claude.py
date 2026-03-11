@@ -323,6 +323,7 @@ class ClaudeRunner:
         succeeded = sum(1 for r in results if r.success)
         failed = total - succeeded
         total_duration = sum(r.duration_seconds for r in results)
+        sv_ran = [r.safe_verify_result for r in results if r.safe_verify_result and r.safe_verify_result.ran]
 
         print(f"\n{'=' * 60}")
         print("BATCH SUMMARY")
@@ -330,6 +331,10 @@ class ClaudeRunner:
         print(f"Total tasks: {total}")
         print(f"Succeeded: {succeeded}")
         print(f"Failed: {failed}")
+        if sv_ran:
+            sv_passed = sum(1 for sv in sv_ran if sv.success)
+            sv_failed = len(sv_ran) - sv_passed
+            print(f"SafeVerify: {len(sv_ran)} ran, {sv_passed} passed, {sv_failed} failed")
         print(f"Total duration: {total_duration:.1f}s")
 
         if failed > 0:
