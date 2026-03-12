@@ -9,6 +9,7 @@ Usage:
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Optional, List
@@ -23,6 +24,12 @@ from .lean_checker import find_lean_files
 
 class ClaudeRunner:
     """Claude runner CLI for Lean theorem proving tasks."""
+
+    @staticmethod
+    def _print_kill_hint():
+        """Print emergency-stop hint for this runner process."""
+        pid = os.getpid()
+        print(f"[info] Runner current pid={pid}, one-click stop command: kill -TERM {pid}")
 
     def run(
         self,
@@ -66,6 +73,7 @@ class ClaudeRunner:
             # Folder
             python -m scripts.run_claude run /path/to/folder --task-type folder --prompt "..."
         """
+        self._print_kill_hint()
         target_path = Path(target).resolve()
 
         # Auto-detect task_type
@@ -140,6 +148,7 @@ class ClaudeRunner:
             python -m scripts.run_claude batch tasks.yaml
             python -m scripts.run_claude batch tasks.yaml --parallel --max-workers 4
         """
+        self._print_kill_hint()
         config_path = Path(config_file).resolve()
         if not config_path.exists():
             print(f"[error] Config file not found: {config_path}", file=sys.stderr)
@@ -215,6 +224,7 @@ class ClaudeRunner:
             python -m scripts.run_claude from-folder /path/to/folder --prompt-file prompt.txt
             python -m scripts.run_claude from-folder /path/to/folder --prompt-file prompt.txt --parallel --max-workers 4
         """
+        self._print_kill_hint()
         folder_path = Path(folder).resolve()
         if not folder_path.exists():
             print(f"[error] Folder not found: {folder_path}", file=sys.stderr)
