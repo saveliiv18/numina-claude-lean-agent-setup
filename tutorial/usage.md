@@ -133,10 +133,10 @@ python -m scripts.run_claude from-folder <folder> [options]
 
 ```bash
 # Sequential execution
-python -m scripts.run_claude from-folder leanproblems/Minif2f --prompt-file config/prompt_complete_file.txt
+python -m scripts.run_claude from-folder leanproblems/Minif2f --prompt-file prompts/prompt_complete_file.txt
 
 # Parallel execution
-python -m scripts.run_claude from-folder leanproblems/Minif2f --prompt-file config/prompt_complete_file.txt --parallel --max-workers 4
+python -m scripts.run_claude from-folder leanproblems/Minif2f --prompt-file prompts/prompt_complete_file.txt --parallel --max-workers 4
 ```
 
 ---
@@ -186,7 +186,7 @@ Final config = defaults + task (task takes priority)
 ```yaml
 defaults:
   task_type: file
-  prompt_file: config/prompt_complete_file.txt
+  prompt_file: prompts/prompt_complete_file.txt
   max_rounds: 2              # Default 2 rounds
 
 tasks:
@@ -210,7 +210,7 @@ In this example:
 ```yaml
 defaults:
   task_type: file
-  prompt_file: config/prompt_complete_file.txt
+  prompt_file: prompts/prompt_complete_file.txt
   cwd: .
   check_after_complete: true
   permission_mode: bypassPermissions

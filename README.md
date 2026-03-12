@@ -24,22 +24,57 @@ An agent built on Claude Code for formal theorem proving tasks. We used this sys
 
 ### 1. Environment Setup
 
-Follow the setup guide to install Lean, Claude Code, and numina-lean-lsp-mcp:
+Run the following command to set up Lean, Claude Code, and numina-lean-lsp-mcp:
 
-**[Tutorial: Setup Guide](tutorial/setup.md)**
+```bash
+git clone https://github.com/project-numina/numina-lean-agent
+cd numina-lean-agent/tutorial
+./setup.sh YOUR_PROJECT_NAME
+```
+
+
+If you prefer a manual installation or encounter any issues with the automatic script, please refer to the **[Tutorial: Setup Guide](tutorial/setup.md)** for detailed step-by-step instructions.
+
+Next, set up the Python environment:
+```bash
+cd ..
+uv python install
+uv sync
+```
+
+
+Before running any scripts, activate the Python environment:
+```bash
+source .venv/bin/activate
+```
 
 ### 2. Run Our Agent
 
-See the usage guide for detailed instructions on running our agent:
+After following the setup instructions, your project will be located at `projects/YOUR_PROJECT_NAME`. Place your Lean code here and start experimenting! 
 
-**[Tutorial: Usage Guide](tutorial/usage.md)**
+#### Quick Examples
 
-### Quick Example
+Before running the examples, you need to configure Claude Code. Choose one of the following options:
+
+- **Option 1: Claude Account Login**  
+  Run `Claude` in the terminal and follow the interactive login instructions.
+
+- **Option 2: API Key Configuration**  
+  Set the following environment variables with your API credentials:
+
+```bash
+export ANTHROPIC_BASE_URL=xxx      # Optional: custom API endpoint
+export ANTHROPIC_AUTH_TOKEN=xxx    # Your API key
+export ANTHROPIC_MODEL=xxx         # Model name (e.g., anthropic/claude-opus-4.5)
+```
+
+
+Once configured, you can use the following commands to get started:
 
 ```bash
 # Run on a single file
 python -m scripts.run_claude run leanproblems/Minif2f/mathd_algebra_478.lean \
-  --prompt-file config/prompt_complete_file.txt \
+  --prompt-file prompts/prompt_complete_file.txt \
   --max-rounds 5
 
 # Run batch tasks from config
@@ -47,9 +82,14 @@ python -m scripts.run_claude batch config/config_minif2f.yaml
 
 # Run all .lean files in a folder
 python -m scripts.run_claude from-folder leanproblems/Minif2f \
-  --prompt-file config/prompt_complete_file.txt \
+  --prompt-file prompts/prompt_complete_file.txt \
   --max-rounds 5
 ```
+
+#### Detailed Docs
+For comprehensive instructions on using our agent, check out:
+
+**[Tutorial: Usage Guide](tutorial/usage.md)**
 
 ## Related Projects
 

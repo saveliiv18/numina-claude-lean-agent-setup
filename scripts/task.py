@@ -196,6 +196,26 @@ class TaskResult:
             changes.extend(rr.statement_changes)
         return changes
 
+    @property
+    def total_cost_usd(self) -> float:
+        """Sum total_cost_usd across all rounds."""
+        total = 0.0
+        for rr in self.round_results:
+            if rr.claude_usage and rr.claude_usage.get("total_cost_usd"):
+                total += rr.claude_usage["total_cost_usd"]
+        return total
+
+    @property
+    def total_usage(self) -> dict:
+        """Aggregate token counts across all rounds."""
+        keys = ["input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"]
+        totals = {k: 0 for k in keys}
+        for rr in self.round_results:
+            if rr.claude_usage:
+                for k in keys:
+                    totals[k] += rr.claude_usage.get(k, 0)
+        return totals
+
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -210,6 +230,8 @@ class TaskResult:
             "mcp_stats": self.mcp_stats,
             "round_results": [rr.to_dict() for rr in self.round_results],
             "statement_changed": self.statement_changed,
+            "total_cost_usd": self.total_cost_usd,
+            "total_usage": self.total_usage,
             "safe_verify": {
                 "ran": self.safe_verify_result.ran,
                 "success": self.safe_verify_result.success,
