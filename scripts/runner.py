@@ -18,8 +18,8 @@ import signal
 from .task import TaskMetadata, TaskResult
 from .lean_checker import find_lean_files, check_lean_files_parallel
 from .mcp_stats import analyze_mcp_log, get_mcp_log_path
-from .statement_tracker import StatementTracker, RoundResult
 from .safe_verify import snapshot_target, run_safe_verify, SafeVerifyResult
+from .statement_tracker import StatementTracker, RoundResult, extract_claude_usage, StatementChange
 
 # Enable line buffering for real-time output when redirecting to file
 sys.stdout.reconfigure(line_buffering=True)
@@ -181,6 +181,8 @@ def run_claude_session(
 
     round_results: List[RoundResult] = []
     statement_error = False
+    needs_statement_restore = False  # Flag to indicate statement needs restoration before next round
+    statement_changes_to_restore: List[StatementChange] = []  # Store the specific changes to restore
     initial_line_counts = get_line_counts(files_to_track) if files_to_track else {}
     last_claude_result: Optional[dict] = None
 
@@ -194,7 +196,7 @@ def run_claude_session(
 
     def record_round(round_num: int, reason: Optional[str], returncode: int, duration: float, claude_result: Optional[dict] = None) -> RoundResult:
         """Record a round result and check for statement changes."""
-        nonlocal statement_error
+        nonlocal statement_error, needs_statement_restore, statement_changes_to_restore
 
         changes = tracker.check() if tracker else []
         line_counts = get_line_counts(files_to_track) if files_to_track else {}
@@ -212,13 +214,25 @@ def run_claude_session(
 
         # Handle statement changes
         if changes:
+            # Separate changes into modified/removed (not allowed) and added (allowed with warn only)
+            not_allowed_changes = [c for c in changes if c.change_type in ["modified", "removed"]]
+            added_changes = [c for c in changes if c.change_type == "added"]
+            
             if on_statement_change == "error":
                 print(f"\n[error] Statement changed in round {round_num}! Stopping.")
                 for c in changes:
                     print(f"  {c}")
                 statement_error = True
+            elif not_allowed_changes:
+                # In warn mode, modified/removed statements trigger restoration in next round
+                print(f"\n[warn] Statement modified/removed in round {round_num}! Will restore in next round.")
+                for c in changes:
+                    print(f"  {c}")
+                needs_statement_restore = True
+                statement_changes_to_restore = not_allowed_changes  # Store specific changes to restore
             else:
-                print(f"\n[warn] Statement changed in round {round_num}:")
+                # In warn mode, only added statements are allowed
+                print(f"\n[warn] New statement(s) added in round {round_num}:")
                 for c in changes:
                     print(f"  {c}")
 
@@ -280,12 +294,24 @@ def run_claude_session(
     if statement_error:
         return "STATEMENT_CHANGED", 1, round_results
 
+    # Check if we need to restore statements after first round
+    if needs_statement_restore:
+        print("\n[info] Restoring initial statements after first round...")
+        tracker.restore_initial_statements(statement_changes_to_restore)
+        needs_statement_restore = False
+
     rounds = 1
     consecutive_limits = 1 if reason == "LIMIT" else 0  # Track consecutive LIMIT count
     max_consecutive_limits = 2  # Reset session after 2 consecutive LIMITs
 
     while reason == "LIMIT" or reason is None or reason == "COMPLETE" or reason == "SELECTED_TARGET_COMPLETE":
         print("=" * 60)
+
+        # Check if we need to restore statements before starting the next round
+        if needs_statement_restore:
+            print("\n[info] Restoring initial statements before next round...")
+            tracker.restore_initial_statements(statement_changes_to_restore)
+            needs_statement_restore = False
 
         if rounds >= max_rounds:
             print(

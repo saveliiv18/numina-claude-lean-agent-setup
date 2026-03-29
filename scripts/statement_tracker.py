@@ -81,12 +81,17 @@ class StatementTracker:
             files: List of .lean files to track
         """
         self.files = [Path(f).resolve() for f in files]
-        self.initial_snapshots: Dict[Path, Dict[str, str]] = {}
+        self.initial_snapshots: Dict[Path, Dict[str, str]] = {}  # {file_path: {statement_name: statement}}
+        self.initial_file_contents: Dict[Path, str] = {}  # {file_path: full_file_content}
         self._capture_initial()
 
     def _capture_initial(self) -> None:
-        """Capture initial state of all statements."""
+        """Capture initial state of all statements and full file contents."""
         for f in self.files:
+            # Store full file content for restoration
+            if f.exists():
+                self.initial_file_contents[f] = f.read_text(encoding="utf-8")
+            # Store statements
             self.initial_snapshots[f] = extract_statements_from_file(f)
 
     def check(self) -> List[StatementChange]:
@@ -128,10 +133,134 @@ class StatementTracker:
                     ))
 
         return changes
+    
+    def check_initial_statements(self) -> tuple[bool, List[StatementChange]]:
+        """
+        Using the check function, check if any initial statements are modified or removed.
+        
+        Returns:
+            Tuple of (is_valid, changes):
+            - is_valid: True if all initial statements are unchanged, False if any were modified or removed
+            - changes: List of all StatementChange objects (modified or removed), empty if all valid
+        """
+        changes = self.check()
+        # Filter to only modified or removed changes (not added)
+        relevant_changes = [c for c in changes if c.change_type in ["modified", "removed"]]
+        is_valid = len(relevant_changes) == 0
+        return is_valid, relevant_changes
 
     def get_initial_statements(self) -> Dict[Path, Dict[str, str]]:
         """Get the initial snapshots."""
         return self.initial_snapshots.copy()
+
+    def restore_initial_statements(self, changes: Optional[List[StatementChange]] = None) -> None:
+        """
+        Restore all files to their initial statement state.
+        This replaces the current theorem/lemma statements with the original ones.
+        If a file was deleted, restore it from the stored initial content.
+        
+        Args:
+            changes: Optional list of StatementChange objects to restore. If provided, only restore these changes.
+                    If not provided, check all files for changes.
+        """
+        # If no changes provided, check for them
+        if changes is None:
+            _, changes = self.check_initial_statements()
+        
+        if not changes:
+            print("[info] No statement changes to restore")
+            return
+        
+        # Group changes by file
+        changes_by_file: Dict[Path, List[StatementChange]] = {}
+        for change in changes:
+            if change.file_path not in changes_by_file:
+                changes_by_file[change.file_path] = []
+            changes_by_file[change.file_path].append(change)
+        
+        # First, check if any files were deleted and restore them
+        # Also track which files were restored so we skip processing them again
+        restored_files = set()
+        for f in self.files:
+            initial_content = self.initial_file_contents.get(f)
+            if not initial_content:
+                continue
+            
+            if not f.exists():
+                # File was deleted, restore from initial content
+                print(f"[info] File {f} was deleted, restoring from initial content...")
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_text(initial_content, encoding="utf-8")
+                print(f"[info] Restored file {f}")
+                restored_files.add(f)
+        
+        # Now restore the specific statement changes for each file
+        # Skip files that were restored (they already have all statements)
+        for f, file_changes in changes_by_file.items():
+            # Skip if this file was deleted and restored
+            if f in restored_files:
+                continue
+            
+            if not f.exists():
+                continue
+                
+            initial_statements = self.initial_snapshots.get(f, {})
+            initial_content = self.initial_file_contents.get(f, "")
+            
+            if not initial_statements or not initial_content:
+                continue
+            
+            current_content = f.read_text(encoding="utf-8")
+            new_content = current_content
+            
+            # Parse current content to find blocks
+            parser = LeanCodeParser(current_content)
+            current_blocks = parser.extract_all_blocks(keys=["theorem", "lemma"], allow_overlap=False)
+            
+            # Build a map of current theorem/lemma names to their block text
+            current_block_map = {}
+            for block in current_blocks:
+                name = block.get("info", {}).get("name")
+                if name:
+                    block_text = "\n".join(block.get("lines", []))
+                    current_block_map[name] = block_text
+            
+            for change in file_changes:
+                if change.change_type == "removed":
+                    # Statement was removed, need to restore it
+                    if change.name in initial_statements:
+                        original_stmt = initial_statements[change.name]
+                        # Add the statement with a sorry proof
+                        new_content = new_content + "\n\n" + original_stmt + " := by sorry"
+                        print(f"[info] Restored removed statement '{change.name}' in {f}")
+                
+                elif change.change_type == "modified":
+                    # Statement was modified, restore to original
+                    if change.name in initial_statements and change.name in current_block_map:
+                        original_stmt = initial_statements[change.name]
+                        current_block_text = current_block_map[change.name]
+                        
+                        # The current block includes the proof, we need to replace just the statement part
+                        # Get the statement from info
+                        parser_orig = LeanCodeParser(initial_content)
+                        orig_blocks = parser_orig.extract_all_blocks(keys=["theorem", "lemma"], allow_overlap=False)
+                        
+                        # Find the original block
+                        orig_block_text = None
+                        for block in orig_blocks:
+                            if block.get("info", {}).get("name") == change.name:
+                                orig_block_text = "\n".join(block.get("lines", []))
+                                break
+                        
+                        if orig_block_text:
+                            # Replace the current block with the original block
+                            new_content = new_content.replace(current_block_text, orig_block_text)
+                            print(f"[info] Restored modified statement '{change.name}' in {f}")
+            
+            # Write back if content changed
+            if new_content != current_content:
+                f.write_text(new_content, encoding="utf-8")
+                print(f"[info] Updated {f} with restored statements")
 
 
 def extract_claude_usage(claude_result: Optional[dict]) -> Optional[dict]:
