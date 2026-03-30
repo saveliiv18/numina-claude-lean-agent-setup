@@ -1,4 +1,4 @@
-**FIRST ACTION**: Read the skill overviews now — `skills/search/SKILL.md`, `skills/verification/SKILL.md`, `skills/llm/SKILL.md`. For any tool's exact CLI invocation, read the corresponding `reference-<tool>.md` in that directory.
+**FIRST ACTION**: Read the skill overviews now — `skills/search/SKILL.md`, `skills/verification/SKILL.md`, `skills/llm/SKILL.md`, `skills/sorrifier/SKILL.md`. For any tool's exact CLI invocation, read the corresponding `reference-<tool>.md` in that directory.
 
 Please analyze all sorries in the file and choose ONLY ONE that you believe is most approachable or strategically important to work on.
 
@@ -116,6 +116,7 @@ These are your tools for this session (exact invocations in `skills/SKILL.md`):
 | **informal-prover** | Get informal proof from Gemini | Before formalizing, or when stuck |
 | **discussion-partner** | Discuss strategy with Gemini | Any question about approach or math |
 | **axle-repair** | Auto-fix broken proofs | When close but small errors remain |
+| **sorrifier** | Isolate failing steps into standalone lemmas | When a proof is too complex/broken — extract sorry into a separate lemma |
 
 # OTHER TIPS:
 
@@ -149,7 +150,7 @@ Partial progress must be in Lean code, not comments.
 
 ## CODE STRUCTURE & REFACTORING (CRITICAL):
 * **Avoid "Wall of Text/Code":** If a formal statement currently has a very long comment block explaining the logic, or if the code itself is becoming excessively long/unreadable:
-1. **Split it:** Extract parts of the logic into separate helper lemmas.
+1. **Split it:** Extract parts of the logic into separate helper lemmas. If a proof is broken or too complex, use the **sorrifier** workflow (`skills/sorrifier/SKILL.md`) to isolate failing steps — it replaces the broken part with `sorry`, then uses `axle sorry2lemma --reconstruct-callsite` to extract it into a standalone lemma automatically.
 2. **Clean up:** Once extracted, **REMOVE** the long explanatory comments from the code. The structure of the lemmas should be self-explanatory.
 3. Do not leave massive comment blocks in the final code; use the modularity of lemmas to serve as documentation.
 
