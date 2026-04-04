@@ -248,8 +248,8 @@ theorem main_theorem : ... := ...
 
 **CRITICAL: Code must compile with sorry.**
 
-1. Run **axle-check** on the file (`python skills/cli/axle.py check FILE --environment lean-4.28.0`)
-2. Check for severity-1 errors
+1. Run **diagnostic** on the file (`python skills/cli/diagnostic.py FILE`)
+2. Check for severity `"error"` in diagnostics
 3. Fix any errors:
    - Type mismatches
    - Unknown identifiers
@@ -502,7 +502,7 @@ lemma foo : P := sorry
 ### Pitfall 4: Not Verifying Compilation
 
 ❌ **Bad**: Inserting code without checking compilation
-✅ **Good**: Always run **axle-check** and fix errors
+✅ **Good**: Always run **diagnostic** and fix errors
 
 ### Pitfall 5: Forgetting Blueprint Update
 

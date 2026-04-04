@@ -36,8 +36,8 @@ BLUEPRINT is the single source of truth. If it's out of sync, the next session w
 
 ## ⚠️ CRITICAL: Verification Protocol
 
-**Proof agents must use axle-check for compilation checks.**
-- ✅ USE: `python skills/cli/axle.py check FILE --environment lean-4.28.0`
+**Proof agents must use diagnostic for compilation checks.**
+- ✅ USE: `python skills/cli/diagnostic.py FILE`
 - ❌ AVOID: lake build (slow, unnecessary for single file)
 
 ## Workflow
@@ -85,7 +85,7 @@ BLUEPRINT is the single source of truth. If it's out of sync, the next session w
             1. Work in tmp file (create tmp_<lemma_name>.lean in same directory)
             2. Try hint → grind FIRST before any manual tactics
             3. Search leandex (`python skills/cli/leandex.py`) for library lemmas before proving manually
-            4. Use axle-check (`python skills/cli/axle.py check`) for verification (NOT lake build)
+            4. Use diagnostic (`python skills/cli/diagnostic.py`) for verification (NOT lake build)
             5. Code must compile. Use sorry only for smallest stuck part.
             6. NEVER use axiom. Always use sorry for unproven statements.
             7. Attempt budget: Must try all required categories (20-50 attempts)
@@ -127,7 +127,7 @@ You are Lean Coordinator. Read /mnt/nvme1/jacky/workspace/claude_base/putnam/doc
 
 ⚠️ ABSOLUTE RULE: ALL work must go through Task tool subagent. You are forbidden from doing any direct work.
 
-⚠️ VERIFICATION: Proof agents must use axle-check (NOT lake build).
+⚠️ VERIFICATION: Proof agents must use diagnostic (NOT lake build).
 
 ⚠️ SYNC: Update BLUEPRINT.md immediately after any progress.
 
@@ -147,7 +147,7 @@ You are Lean Coordinator. Target file: PutnamLean/putnam_2025_a5.lean
 4. Use Task tool subagent to prove the sorries
 
 ⚠️ You are forbidden from proving directly. Must use subagent.
-⚠️ Proof agents use axle-check (NOT lake build) for verification.
+⚠️ Proof agents use diagnostic (NOT lake build) for verification.
 ⚠️ Update BLUEPRINT immediately after progress.
 ```
 
@@ -176,7 +176,7 @@ You are Lean Coordinator. Target file: PutnamLean/putnam_2025_a5.lean
 - ✅ Work in tmp files (tmp_<lemma_name>.lean)
 - ✅ Try hint → grind FIRST
 - ✅ Search leandex (`python skills/cli/leandex.py`) before manual proof
-- ✅ Use axle-check for verification
+- ✅ Use diagnostic for verification
 - ✅ Attempt budget: 20-50 attempts, 3-5 categories
 - ❌ Never use lake build
 - ❌ Never use axiom (use sorry)
@@ -184,7 +184,7 @@ You are Lean Coordinator. Target file: PutnamLean/putnam_2025_a5.lean
 ### For Sketch Agents:
 - ✅ Formalize informal → Lean
 - ✅ Add status comments
-- ✅ Verify compilation (axle-check)
+- ✅ Verify compilation (diagnostic)
 - ✅ Update BLUEPRINT with file:line
 - ❌ Never add proofs (leave as sorry)
 

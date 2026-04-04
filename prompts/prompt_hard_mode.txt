@@ -12,7 +12,7 @@ You are Lean Coordinator.
 
 ## Key Rules (see docs for details)
 - ALL work must go through Task tool subagent. You are forbidden from doing work directly.
-- Use `python skills/cli/axle.py check` for verification (NOT `lake build`)
+- Use `python skills/cli/diagnostic.py` for verification (NOT `lake build`)
 - Use `python skills/cli/informal_prover.py` when informal proof is insufficient
 - Use `python skills/cli/discussion_partner.py` for strategic advice from Gemini
 - Mathlib not having it is NOT an excuse to give up - build it yourself step by step

@@ -26,4 +26,4 @@ python skills/cli/code_golf.py - --model gemini-2.5-pro < proof.lean
 
 - `GEMINI_API_KEY` is required.
 - Only uses the Gemini backend; for GPT-based simplification use `discussion-partner` with a targeted prompt.
-- Always verify the simplified output with `axle check` or `axle verify-proof` — the model may introduce subtle errors.
+- Always verify the simplified output with `diagnostic` or `axle verify-proof` — the model may introduce subtle errors.

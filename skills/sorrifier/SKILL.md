@@ -13,10 +13,10 @@ This workflow uses two tools from other skills. All commands go through the logg
 
 | Tool | Skill | Purpose |
 |------|-------|---------|
-| `python skills/cli/axle.py check` | [verification](../verification/SKILL.md) | Diagnose compilation errors and pinpoint failing lines |
+| `python skills/cli/diagnostic.py` | [verification](../verification/SKILL.md) | Diagnose compilation errors and pinpoint failing lines |
 | `python skills/cli/axle.py sorry2lemma` | [code-transform](../code-transform/SKILL.md) | Extract sorry into standalone lemma with `--reconstruct-callsite` |
 
-For full parameter reference, see `verification/reference-axle-check.md` and `code-transform/reference-axle-sorry2lemma.md`.
+For full parameter reference, see `verification/reference-diagnostic.md` and `code-transform/reference-axle-sorry2lemma.md`.
 
 ## Execution Workflow
 

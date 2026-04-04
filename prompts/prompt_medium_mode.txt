@@ -2,6 +2,8 @@
 
 Please analyze all sorries in the file and choose ONLY ONE that you believe is most approachable or strategically important to work on.
 
+Your working file is /home/caoyichuan/caoyichuan/github/numina-lean-agent/experiment/Experiment/a1.lean
+
 # YOUR TASK: WRITE LEAN FORMAL PROOFS
 
 Your task is to write Lean 4 formal proofs that compile successfully.
@@ -89,16 +91,16 @@ exact helper n
 ```
 
 ## VERIFICATION (CRITICAL — VERIFY FREQUENTLY):
-* Use **axle-check** very frequently — after every logical block of changes
-* axle-check is fast; do not hesitate to call it. When in doubt, just call it.
-* Returns `okay: true/false` and `lean_messages`; severity 1 = error
+* Use **diagnostic** very frequently — after every logical block of changes
+* diagnostic is fast; do not hesitate to call it. When in doubt, just call it.
+* Returns JSON with `has_error: true/false` and `diagnostics`; severity `"error"` = compilation failure
 * NEVER use `lake build`
 
 
 # WORKFLOW:
 
 1. Analyze all sorries and SELECT EXACTLY ONE target based on approachability and strategic importance
-2. After each change: run **axle-check** (fast — use it liberally)
+2. After each change: run **diagnostic** (fast — use it liberally)
 3. (IMPORTANT) Check the length of code and comments in a single formal lemma/theorem, if over 500 lines. Please create lemmas to prove it.
 4. Create helper lemmas if needed (mark them with "/- (by claude) Helper for ... -/")
 5. Stay focused on target until complete
@@ -110,7 +112,7 @@ These are your tools for this session (exact invocations in `skills/SKILL.md`):
 
 | Tool | Purpose | When to use |
 |------|---------|-------------|
-| **axle-check** | Compile & verify file | After every change — fast, use freely |
+| **diagnostic** | Get diagnostic messages (errors/warnings/infos) from Lean 4 server | After every change — use freely |
 | **leandex** | Semantic lemma search | Whenever stuck or looking for a Mathlib lemma |
 | **loogle** | Pattern-based lemma search | When you know the type shape |
 | **informal-prover** | Get informal proof from Gemini | Before formalizing, or when stuck |
@@ -183,8 +185,8 @@ Partial progress must be in Lean code, not comments.
 
 **Termination is triggered by the state of your selected target only.**
 
-* **SELECTED_TARGET_COMPLETE**: Your selected target compiles with no sorry and no errors → run **axle-check** on the file one final time to confirm, then **stop immediately**. Errors or sorries in OTHER lemmas do NOT prevent you from ending — ignore them.
-* **COMPLETE**: axle-check on the entire folder returns okay with zero sorries and zero errors across all files → end with COMPLETE.
+* **SELECTED_TARGET_COMPLETE**: Your selected target compiles with no sorry and no errors → run **diagnostic** on the file one final time to confirm, then **stop immediately**. Errors or sorries in OTHER lemmas do NOT prevent you from ending — ignore them.
+* **COMPLETE**: diagnostic on the entire folder returns okay with zero sorries and zero errors across all files → end with COMPLETE.
 * **LIMIT**: You are stuck, out of tokens, or have made no meaningful progress on the selected target → end with LIMIT.
 
 # END FORMAT:
@@ -203,6 +205,6 @@ DO NOT add any other text or markdown formatting for this line.
 3. NEW LEMMAS: mark with "/- (by claude) Helper for ... -/"
 4. COMPLEX PROOFS: Break informal solution into multiple lemmas; do not write one giant proof.
 5. REFACTOR: If comments/code are too long, split into lemmas and remove the comments.
-6. VERIFY frequently with **axle-check** — it's fast, use it liberally
+6. VERIFY frequently with **diagnostic** — it's fast, use it liberally
 7. MARK your comments: `/- (by claude) ... -/` (ALWAYS include "(by claude)" marker)
 8. END with: SELECTED_TARGET_COMPLETE / COMPLETE / LIMIT in the format of END_REASON:{reason}  (DO NOT add any other text or markdown formatting for this line)
