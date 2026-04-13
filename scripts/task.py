@@ -10,6 +10,7 @@ import os
 
 if TYPE_CHECKING:
     from .statement_tracker import RoundResult, StatementChange
+    from .safe_verify import SafeVerifyResult
 
 
 @dataclass
@@ -47,6 +48,10 @@ class TaskMetadata:
     # Optional fields - Git integration
     git_commit: bool = False  # Whether to create git commits after each round
 
+    # Optional fields - SafeVerify post-completion check
+    safe_verify_path: Optional[str | Path] = None  # Path to safe_verify binary; None = skip
+    safe_verify_cwd: Optional[str | Path] = None  # cwd for lake env (falls back to task.cwd)
+
     # Auto-generated fields
     created_at: datetime = field(default_factory=datetime.now)
     task_id: str = field(default="")  # Auto-generated unique ID
@@ -68,6 +73,10 @@ class TaskMetadata:
             self.result_dir = Path(self.result_dir).resolve()
         if self.mcp_log_dir:
             self.mcp_log_dir = Path(self.mcp_log_dir).resolve()
+        if self.safe_verify_path:
+            self.safe_verify_path = Path(self.safe_verify_path).resolve()
+        if self.safe_verify_cwd:
+            self.safe_verify_cwd = Path(self.safe_verify_cwd).resolve()
 
     def get_prompt(self) -> str:
         """Get prompt content (from prompt or prompt_file), with target path prepended."""
@@ -119,6 +128,8 @@ class TaskMetadata:
             "track_statements": self.track_statements,
             "on_statement_change": self.on_statement_change,
             "git_commit": self.git_commit,
+            "safe_verify_path": str(self.safe_verify_path) if self.safe_verify_path else None,
+            "safe_verify_cwd": str(self.safe_verify_cwd) if self.safe_verify_cwd else None,
             "created_at": self.created_at.isoformat(),
         }
 
@@ -150,6 +161,8 @@ class TaskMetadata:
             track_statements=data.get("track_statements", True),
             on_statement_change=data.get("on_statement_change", "warn"),
             git_commit=data.get("git_commit", False),
+            safe_verify_path=data.get("safe_verify_path"),
+            safe_verify_cwd=data.get("safe_verify_cwd"),
             created_at=created_at,
             task_id=data.get("task_id", ""),
         )
@@ -169,6 +182,7 @@ class TaskResult:
     mcp_stats: Optional[dict] = None  # MCP tool call statistics
     round_results: List["RoundResult"] = field(default_factory=list)  # Per-round results
     statement_changed: bool = False  # Whether any statement was changed
+    safe_verify_result: Optional["SafeVerifyResult"] = None  # SafeVerify check result
 
     @property
     def duration_seconds(self) -> float:
@@ -218,6 +232,12 @@ class TaskResult:
             "statement_changed": self.statement_changed,
             "total_cost_usd": self.total_cost_usd,
             "total_usage": self.total_usage,
+            "safe_verify": {
+                "ran": self.safe_verify_result.ran,
+                "success": self.safe_verify_result.success,
+                "returncode": self.safe_verify_result.returncode,
+                "error_message": self.safe_verify_result.error_message,
+            } if self.safe_verify_result else None,
         }
 
     @classmethod

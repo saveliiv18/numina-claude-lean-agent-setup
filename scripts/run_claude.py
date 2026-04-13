@@ -45,6 +45,8 @@ class ClaudeRunner:
         mcp_log_name: Optional[str] = None,
         permission_mode: str = "bypassPermissions",
         json_output: bool = False,
+        safe_verify_path: Optional[str] = None,
+        safe_verify_cwd: Optional[str] = None,
     ) -> int:
         """
         Run a single task.
@@ -69,6 +71,10 @@ class ClaudeRunner:
         Examples:
             # Single file
             python -m scripts.run_claude run /path/to/file.lean --prompt-file prompt.txt
+
+            # With SafeVerify
+            python -m scripts.run_claude run /path/to/file.lean --prompt-file prompt.txt \\
+                --safe-verify-path /path/to/safe_verify
 
             # Folder
             python -m scripts.run_claude run /path/to/folder --task-type folder --prompt "..."
@@ -104,6 +110,8 @@ class ClaudeRunner:
             mcp_log_name=mcp_log_name,
             permission_mode=permission_mode,
             output_format="json" if json_output else None,
+            safe_verify_path=safe_verify_path,
+            safe_verify_cwd=safe_verify_cwd,
         )
 
         # Run task
@@ -200,6 +208,8 @@ class ClaudeRunner:
         permission_mode: str = "bypassPermissions",
         parallel: bool = False,
         max_workers: int = 1,
+        safe_verify_path: Optional[str] = None,
+        safe_verify_cwd: Optional[str] = None,
     ) -> int:
         """
         Generate and run tasks from a folder (one task per .lean file).
@@ -258,6 +268,8 @@ class ClaudeRunner:
                 result_dir=result_dir,
                 mcp_log_name=lean_file.stem,
                 permission_mode=permission_mode,
+                safe_verify_path=safe_verify_path,
+                safe_verify_cwd=safe_verify_cwd,
             )
             tasks.append(task)
 
@@ -280,6 +292,10 @@ class ClaudeRunner:
         print(f"Duration: {result.duration_seconds:.1f}s")
         if result.error_message:
             print(f"Error: {result.error_message}")
+        if result.safe_verify_result and result.safe_verify_result.ran:
+            sv = result.safe_verify_result
+            sv_status = "PASSED" if sv.success else "FAILED"
+            print(f"SafeVerify: {sv_status}")
 
         # Print line count changes
         self._print_line_changes(result)
@@ -317,6 +333,7 @@ class ClaudeRunner:
         succeeded = sum(1 for r in results if r.success)
         failed = total - succeeded
         total_duration = sum(r.duration_seconds for r in results)
+        sv_ran = [r.safe_verify_result for r in results if r.safe_verify_result and r.safe_verify_result.ran]
 
         print(f"\n{'=' * 60}")
         print("BATCH SUMMARY")
@@ -324,6 +341,10 @@ class ClaudeRunner:
         print(f"Total tasks: {total}")
         print(f"Succeeded: {succeeded}")
         print(f"Failed: {failed}")
+        if sv_ran:
+            sv_passed = sum(1 for sv in sv_ran if sv.success)
+            sv_failed = len(sv_ran) - sv_passed
+            print(f"SafeVerify: {len(sv_ran)} ran, {sv_passed} passed, {sv_failed} failed")
         print(f"Total duration: {total_duration:.1f}s")
 
         if failed > 0:
