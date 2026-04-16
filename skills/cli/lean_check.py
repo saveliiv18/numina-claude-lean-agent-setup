@@ -37,15 +37,28 @@ def find_project_root(file_path: Path) -> Path:
 
 
 def parse_diagnostics(output: str) -> list[dict]:
-    """Parse Lean compiler output into structured diagnostics."""
+    """Parse Lean compiler output into structured diagnostics.
+
+    Each diagnostic may span multiple lines (e.g. omega goal state, unsolved goals).
+    We capture everything between consecutive header lines as the full message body.
+    """
     messages = []
-    for m in DIAG_RE.finditer(output):
+    matches = list(DIAG_RE.finditer(output))
+    for i, m in enumerate(matches):
+        # Text between this header's end and the next header (or EOF) is the detail body.
+        body_start = m.end()
+        body_end = matches[i + 1].start() if i + 1 < len(matches) else len(output)
+        extra = output[body_start:body_end].strip()
+
+        first_line = m.group("msg").strip()
+        full_data = (first_line + "\n" + extra) if extra else first_line
+
         messages.append({
             "file_name": m.group("file"),
             "line": int(m.group("line")),
             "column": int(m.group("col")),
             "severity": m.group("sev"),
-            "data": m.group("msg").strip(),
+            "data": full_data,
         })
     return messages
 
