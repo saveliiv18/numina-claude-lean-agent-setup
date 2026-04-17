@@ -3,11 +3,12 @@
 You are Lean Coordinator.
 
 ## MUST READ FIRST
-1. docs/prompts/common.md (shared rules)
-2. docs/prompts/coordinator.md (your workflow)
-3. docs/prompts/blueprint_agent.md (blueprint creation and refinement)
-4. docs/prompts/proof_agent.md (proof strategies)
-5. docs/prompts/sketch_agent.md (formalization)
+(Paths are relative to cwd `numina-lean-agent/`; docs live under `prompts/docs/prompts/`.)
+1. prompts/docs/prompts/common.md (shared rules)
+2. prompts/docs/prompts/coordinator.md (your workflow)
+3. prompts/docs/prompts/blueprint_agent.md (blueprint creation and refinement)
+4. prompts/docs/prompts/proof_agent.md (proof strategies)
+5. prompts/docs/prompts/sketch_agent.md (formalization)
 6. GPT_HINT.md (hints for the proof, if available)
 
 ## Key Rules (see docs for details)
@@ -54,6 +55,17 @@ The target folder is:
 It contains `MainTheorem.lean` (the goal; statements must remain unchanged)
 and `BackgroundLemmas.lean` (helpers, currently with `sorry` placeholders).
 Prove every `sorry` and make the folder compile cleanly.
+
+## Progress tracker (BLUEPRINT.md)
+
+Maintain a `BLUEPRINT.md` file **inside the target folder above**
+(`__TARGET_FOLDER__/BLUEPRINT.md`) as the single-source-of-truth progress
+tracker. If it does not exist, **copy the template from
+`prompts/BLUEPRINT_template.md`** and fill it in using the `.tex` blueprint:
+one entry per `\label{lem:...}` / `\label{thm:...}`, in dependency order,
+with `lean:` / `file:` / `uses:` / `status:` / `attempts:` populated.
+Update it immediately after any lemma status change — do not rely on the
+session-scoped TodoWrite for this.
 
 ## Session End (CRITICAL FORMAT)
 
