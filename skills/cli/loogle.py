@@ -2,6 +2,7 @@
 """Search Lean definitions/theorems using Loogle (pattern matching)."""
 import argparse
 import json
+import os
 import logging
 import sys
 import urllib.parse
@@ -11,7 +12,7 @@ from pathlib import Path
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler(Path(__file__).parents[2] / "cli.log")],
+    handlers=[logging.FileHandler(Path(os.environ.get("CLI_LOG_PATH", Path(__file__).parents[2] / "cli.log")))],
 )
 logger = logging.getLogger(__name__)
 

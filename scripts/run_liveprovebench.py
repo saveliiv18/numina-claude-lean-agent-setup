@@ -182,7 +182,6 @@ def process_row(
 
     # 3. Build and run task
     result_dir = resolve_runner_path(runner_cfg, "result_dir")
-    mcp_log_dir = resolve_runner_path(runner_cfg, "mcp_log_dir")
 
     task = TaskMetadata(
         task_type=runner_cfg.get("task_type", "folder"),
@@ -192,8 +191,6 @@ def process_row(
         max_rounds=int(runner_cfg.get("max_rounds", 10)),
         permission_mode=runner_cfg.get("permission_mode", "bypassPermissions"),
         result_dir=result_dir,
-        mcp_log_dir=mcp_log_dir,
-        mcp_log_name=branch,
     )
 
     if dry_run:
@@ -203,8 +200,6 @@ def process_row(
         print(f"  cwd          = {task.cwd}")
         print(f"  max_rounds   = {task.max_rounds}")
         print(f"  result_dir   = {task.result_dir}")
-        print(f"  mcp_log_dir  = {task.mcp_log_dir}")
-        print(f"  mcp_log_name = {task.mcp_log_name}")
         return None
 
     result = run_task(task)

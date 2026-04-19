@@ -16,22 +16,13 @@ python -m scripts.run_claude <command> [options]
 > lake build
 > ```
 >
-> If you skip this, the first MCP/LSP startup may be noticeably slower because it needs to compile/index dependencies.
+> If you skip this, the first invocation of the CLI skills (e.g. `lean_check.py`) will be noticeably slower because Lean still needs to compile/index dependencies on first use.
 
-> **MCP Setup (lean-lsp-mcp, required):** MCP configuration is **directory-scoped**. If you plan to run `run_claude` with `--cwd /path/to/project`, you must add the MCP **from that same directory** (or a parent directory):
+> **Skills Setup (required):** Skills are loaded from the `.claude/skills/` directory **inside the Claude working directory** (`--cwd`, defaults to `.`). Make sure the five skills (`code-transform`, `llm`, `search`, `sorrifier`, `verification`) have been copied into that project's `.claude/skills/` — see `tutorial/setup.md` section 5, or run `tutorial/setup.sh`.
 >
-> If you do **not** pass `--cwd`, the effective working directory is the **current directory** where you run `python -m scripts.run_claude ...` (i.e. `.`). In that case, you must run `claude mcp add ...` from the current directory (or a parent directory).
->
-> ```bash
-> cd /path/to/project
-> claude mcp add lean-lsp -- /absolute/path/to/numina-lean-mcp.sh
-> ```
->
-> Verify:
->
-> ```bash
-> claude mcp list
-> ```
+> Verify by running `claude` in that directory and typing `/skills`; you should see all five skills listed.
+
+> **Target must live inside a Lean project (required):** The target `.lean` file or folder you pass to `run` / `batch` / `from-folder` must be located **inside a Lean project** — i.e. some ancestor directory contains `lean-toolchain` and `lakefile.{lean,toml}`. The CLI skills (e.g. `lean_check.py`) walk up from the target to find the project root and invoke `lake env lean` there. A standalone `.lean` file outside any project will fail to compile.
 
 Three commands are supported:
 - `run` - Run a single task
@@ -54,18 +45,17 @@ python -m scripts.run_claude run <target> [options]
 |-----------|------|---------|-------------|
 | `target` | str | (required) | Target path (file or folder) |
 | `--task-type` | str | `auto` | Task type: `file` / `folder` / `auto` |
-| `--prompt` | str | - | Direct prompt content |
-| `--prompt-file` | str | - | Read prompt from file (mutually exclusive with `--prompt`) |
+| `--prompt` | str | - | Direct prompt content (**exactly one of `--prompt` / `--prompt-file` is required**) |
+| `--prompt-file` | str | - | Read prompt from file (**exactly one of `--prompt` / `--prompt-file` is required**) |
 | `--cwd` | str | `.` | Claude working directory (defaults to current directory) |
 | `--max-rounds` | int | `20` | Maximum rounds (continue count limit) |
 | `--check` | bool | `True` | Whether to check lean files after completion |
 | `--sleep` | float | `1.0` | Sleep between rounds (seconds) |
-| `--result-dir` | str | - | Result output directory (JSON files) |
-| `--mcp-log-name` | str | - | MCP log name |
+| `--result-dir` | str | - | Result output directory (per-task JSON + isolated `cli.log` + `cli_stats.json`) |
 | `--permission-mode` | str | `bypassPermissions` | Permission mode |
 | `--json-output` | bool | `False` | Whether to use JSON output format |
 
-> **Note:** For `--cwd` + lean-lsp-mcp setup, see **MCP Setup** in the Command Overview section above.
+> **Note:** For `--cwd` + skills setup, see **Skills Setup** in the Command Overview section above.
 
 **Examples:**
 
@@ -118,8 +108,8 @@ python -m scripts.run_claude from-folder <folder> [options]
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `folder` | str | (required) | Folder containing .lean files |
-| `--prompt` | str | - | Direct prompt content |
-| `--prompt-file` | str | - | Read prompt from file |
+| `--prompt` | str | - | Direct prompt content (**exactly one of `--prompt` / `--prompt-file` is required**) |
+| `--prompt-file` | str | - | Read prompt from file (**exactly one of `--prompt` / `--prompt-file` is required**) |
 | `--cwd` | str | `.` | Claude working directory (defaults to current directory) |
 | `--max-rounds` | int | `20` | Maximum rounds |
 | `--check` | bool | `True` | Whether to check after completion |
@@ -160,9 +150,7 @@ Config files support YAML and JSON formats, containing two main sections: `defau
 | `check_after_complete` | bool | `True` | Whether to check lean files after completion |
 | `allow_sorry` | bool | `False` | Whether to allow sorry (default: not allowed) |
 | `sleep_between_rounds` | float | `1.0` | Sleep between rounds (seconds) |
-| `result_dir` | str | - | Result output directory |
-| `mcp_log_dir` | str | - | MCP log directory |
-| `mcp_log_name` | str | - | MCP log name |
+| `result_dir` | str | - | Result output directory (per-task JSON + isolated `cli.log` + `cli_stats.json`) |
 | `permission_mode` | str | `bypassPermissions` | Permission mode |
 | `output_format` | str | - | Output format (`json` / `None`) |
 | `track_statements` | bool | `True` | Whether to track statement changes |
@@ -215,20 +203,14 @@ defaults:
   check_after_complete: true
   permission_mode: bypassPermissions
   result_dir: results/minif2f
-  mcp_log_dir: mcp_logs/minif2f
   max_rounds: 2
 
 tasks:
   - target_path: leanproblems/Minif2f/algebra_sqineq_2atp2bpge2ab.lean
-    mcp_log_name: algebra_sqineq_2atp2bpge2ab
   - target_path: leanproblems/Minif2f/amc12a_2021_p7.lean
-    mcp_log_name: amc12a_2021_p7
   - target_path: leanproblems/Minif2f/mathd_algebra_478.lean
-    mcp_log_name: mathd_algebra_478
   - target_path: leanproblems/Minif2f/mathd_numbertheory_284.lean
-    mcp_log_name: mathd_numbertheory_284
   - target_path: leanproblems/Minif2f/imo_1964_p1.lean
-    mcp_log_name: imo_1964_p1
     max_rounds: 5            # This task is harder, allow more rounds
 ```
 
@@ -296,15 +278,34 @@ tasks:
 
 ### Result Directory
 
-If `result_dir` is set, a JSON file is generated for each task containing:
-- Task ID, success status, end reason
-- Rounds used, duration
-- Line count changes per round
-- MCP tool call statistics
+If `result_dir` is set, each task writes under `<result_dir>/<task_id>/`:
+- `result.json` — task ID, success, end reason, rounds used, duration, token/cost usage, line counts per round
+- `round_<N>.json` / `claude_raw/round_<N>.jsonl` — per-round diagnostics and the raw Claude NDJSON stream
+- `cli.log` — this task's own CLI skill log (see below)
+- `cli_stats.json` — per-tool call counts (`called` / `ok` / `fail`) derived from `cli.log`
 
-### MCP Logs
+### CLI Skill Log (`$CLI_LOG_PATH`)
 
-If `mcp_log_dir` and `mcp_log_name` are set, MCP server logs are saved to the specified directory.
+Each script under `skills/cli/` (`lean_check.py`, `leandex.py`, `loogle.py`, `discussion_partner.py`, `informal_prover.py`, …) logs every invocation via Python `logging.FileHandler`. The log path is driven by the `CLI_LOG_PATH` environment variable:
+
+- **When the runner is used with `--result-dir`**: the runner sets `CLI_LOG_PATH=<result_dir>/<task_id>/cli.log` in the Claude subprocess env, so each task gets an **isolated log file** — safe for parallel runs.
+- **When `CLI_LOG_PATH` is unset** (e.g. you call a skill script directly from the shell): scripts fall back to the shared default `<repo_root>/cli.log`.
+
+```bash
+# Follow the current task's log (replace with your task_id)
+tail -f results/<run_id>/<task_id>/cli.log
+
+# Standalone use — shared default log at repo root
+tail -f cli.log
+grep leandex cli.log
+```
+
+To override the log path manually (e.g., in a script or test):
+
+```bash
+export CLI_LOG_PATH=/tmp/my_cli.log
+python skills/cli/leandex.py "..."
+```
 
 ### Console Output
 

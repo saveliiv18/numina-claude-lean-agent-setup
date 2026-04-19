@@ -42,7 +42,6 @@ class ClaudeRunner:
         check: bool = True,
         sleep: float = 1.0,
         result_dir: Optional[str] = None,
-        mcp_log_name: Optional[str] = None,
         permission_mode: str = "bypassPermissions",
         json_output: bool = False,
     ) -> int:
@@ -59,7 +58,6 @@ class ClaudeRunner:
             check: Whether to check after completion
             sleep: Sleep between rounds (seconds)
             result_dir: Result directory (JSON files)
-            mcp_log_name: MCP log name (sets $MCP_LOG_NAME)
             permission_mode: Permission mode
             json_output: Whether to use JSON output format
 
@@ -101,7 +99,6 @@ class ClaudeRunner:
             check_after_complete=check,
             sleep_between_rounds=sleep,
             result_dir=result_dir,
-            mcp_log_name=mcp_log_name,
             permission_mode=permission_mode,
             output_format="json" if json_output else None,
         )
@@ -140,7 +137,6 @@ class ClaudeRunner:
             tasks:
               - task_type: file
                 target_path: /path/to/file.lean
-                mcp_log_name: file1
               - task_type: folder
                 target_path: /path/to/folder
 
@@ -256,7 +252,6 @@ class ClaudeRunner:
                 check_after_complete=check,
                 sleep_between_rounds=sleep,
                 result_dir=result_dir,
-                mcp_log_name=lean_file.stem,
                 permission_mode=permission_mode,
             )
             tasks.append(task)

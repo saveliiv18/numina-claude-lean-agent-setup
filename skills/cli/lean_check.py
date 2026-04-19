@@ -6,6 +6,7 @@ Output format mirrors axle check: { okay, lean_messages, failed_declarations }.
 """
 import argparse
 import json
+import os
 import logging
 import re
 import subprocess
@@ -15,7 +16,7 @@ from pathlib import Path
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler(Path(__file__).parents[2] / "cli.log")],
+    handlers=[logging.FileHandler(Path(os.environ.get("CLI_LOG_PATH", Path(__file__).parents[2] / "cli.log")))],
 )
 logger = logging.getLogger(__name__)
 

@@ -2,6 +2,7 @@
 """Search Lean theorems using LeanSearch (natural language + Lean terms)."""
 import argparse
 import json
+import os
 import logging
 import sys
 import urllib.parse
@@ -11,7 +12,7 @@ from pathlib import Path
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler(Path(__file__).parents[2] / "cli.log")],
+    handlers=[logging.FileHandler(Path(os.environ.get("CLI_LOG_PATH", Path(__file__).parents[2] / "cli.log")))],
 )
 logger = logging.getLogger(__name__)
 
@@ -19,15 +20,26 @@ logger = logging.getLogger(__name__)
 def search(query: str, num_results: int = 5) -> None:
     logger.info("leansearch.search called: num_results=%d query=%r", num_results, query)
     try:
-        encoded = urllib.parse.quote(query)
+        # leansearch.net expects POST /search with JSON body
+        # {"query": [<list of query strings>], "num_results": N}.
+        # Response is a list-of-lists (one inner list per query).
+        body = json.dumps({"query": [query], "num_results": num_results}).encode("utf-8")
         req = urllib.request.Request(
-            f"https://leansearch.net/api/search?query={encoded}&num_results={num_results}",
-            headers={"User-Agent": "numina-lean-agent/0.1"},
-            method="GET",
+            "https://leansearch.net/search",
+            data=body,
+            headers={
+                "User-Agent": "numina-lean-agent/0.1",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            method="POST",
         )
 
         with urllib.request.urlopen(req, timeout=20) as response:
-            results = json.loads(response.read())
+            payload = json.loads(response.read())
+
+        # Unwrap the outer list (one entry per query — we only send one).
+        results = payload[0] if payload and isinstance(payload, list) else []
 
         if not results:
             logger.info("leansearch.search: no results found")

@@ -33,8 +33,6 @@ class TaskMetadata:
 
     # Optional fields - Result output
     result_dir: Optional[str | Path] = None  # Result output directory (JSON files)
-    mcp_log_dir: Optional[str | Path] = None  # MCP log directory (sets $MCP_LOG_DIR)
-    mcp_log_name: Optional[str] = None  # MCP log name (sets $MCP_LOG_NAME before claude command)
 
     # Optional fields - Claude parameters
     permission_mode: str = "bypassPermissions"  # Permission mode
@@ -66,8 +64,6 @@ class TaskMetadata:
             self.prompt_file = Path(self.prompt_file).resolve()
         if self.result_dir:
             self.result_dir = Path(self.result_dir).resolve()
-        if self.mcp_log_dir:
-            self.mcp_log_dir = Path(self.mcp_log_dir).resolve()
 
     def get_prompt(self) -> str:
         """Get prompt content (from prompt or prompt_file), with target path prepended."""
@@ -88,14 +84,18 @@ class TaskMetadata:
         return self.target_path
 
     def build_env(self) -> dict:
-        """Build environment variables (including MCP_LOG_DIR and MCP_LOG_NAME)."""
+        """Build environment variables for the Claude subprocess.
+
+        When `result_dir` is set, point `CLI_LOG_PATH` at a per-task log file so
+        that `skills/cli/*.py` invocations write into an isolated file (no
+        cross-task pollution). Falls through to the skill script's default
+        (`<repo_root>/cli.log`) when `result_dir` is absent.
+        """
         env = os.environ.copy()
-        if self.mcp_log_dir:
-            # Ensure directory exists
-            Path(self.mcp_log_dir).mkdir(parents=True, exist_ok=True)
-            env["MCP_LOG_DIR"] = str(self.mcp_log_dir)
-        if self.mcp_log_name:
-            env["MCP_LOG_NAME"] = self.mcp_log_name
+        if self.result_dir:
+            cli_log_path = Path(self.result_dir) / self.task_id / "cli.log"
+            cli_log_path.parent.mkdir(parents=True, exist_ok=True)
+            env["CLI_LOG_PATH"] = str(cli_log_path)
         return env
 
     def to_dict(self) -> dict:
@@ -112,8 +112,6 @@ class TaskMetadata:
             "allow_sorry": self.allow_sorry,
             "sleep_between_rounds": self.sleep_between_rounds,
             "result_dir": str(self.result_dir) if self.result_dir else None,
-            "mcp_log_dir": str(self.mcp_log_dir) if self.mcp_log_dir else None,
-            "mcp_log_name": self.mcp_log_name,
             "permission_mode": self.permission_mode,
             "output_format": self.output_format,
             "track_statements": self.track_statements,
@@ -143,8 +141,6 @@ class TaskMetadata:
             allow_sorry=data.get("allow_sorry", False),
             sleep_between_rounds=data.get("sleep_between_rounds", 1.0),
             result_dir=data.get("result_dir"),
-            mcp_log_dir=data.get("mcp_log_dir"),
-            mcp_log_name=data.get("mcp_log_name"),
             permission_mode=data.get("permission_mode", "bypassPermissions"),
             output_format=data.get("output_format"),
             track_statements=data.get("track_statements", True),
@@ -166,7 +162,7 @@ class TaskResult:
     start_time: datetime
     end_time: datetime
     error_message: Optional[str] = None
-    mcp_stats: Optional[dict] = None  # MCP tool call statistics
+    cli_stats: Optional[dict] = None  # CLI skill call statistics (from cli.log slice)
     round_results: List["RoundResult"] = field(default_factory=list)  # Per-round results
     statement_changed: bool = False  # Whether any statement was changed
 
@@ -213,7 +209,7 @@ class TaskResult:
             "start_time": self.start_time.isoformat(),
             "end_time": self.end_time.isoformat(),
             "error_message": self.error_message,
-            "mcp_stats": self.mcp_stats,
+            "cli_stats": self.cli_stats,
             "round_results": [rr.to_dict() for rr in self.round_results],
             "statement_changed": self.statement_changed,
             "total_cost_usd": self.total_cost_usd,
@@ -231,7 +227,7 @@ class TaskResult:
             start_time=datetime.fromisoformat(data["start_time"]),
             end_time=datetime.fromisoformat(data["end_time"]),
             error_message=data.get("error_message"),
-            mcp_stats=data.get("mcp_stats"),
+            cli_stats=data.get("cli_stats") or data.get("mcp_stats"),
             round_results=[],  # Not deserializing round_results for simplicity
             statement_changed=data.get("statement_changed", False),
         )

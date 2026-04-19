@@ -13,18 +13,12 @@ defaults:
   check_after_complete: true
   permission_mode: bypassPermissions
   result_dir: results/minif2f
-  mcp_log_dir: mcp_logs/minif2f
   max_rounds: 2
 
 tasks:
   - target_path: leanproblems/Minif2f/algebra_sqineq_2atp2bpge2ab.lean
-    mcp_log_name: algebra_sqineq_2atp2bpge2ab
   - target_path: leanproblems/Minif2f/amc12a_2021_p7.lean
-    mcp_log_name: amc12a_2021_p7
   - target_path: leanproblems/Minif2f/mathd_algebra_478.lean
-    mcp_log_name: mathd_algebra_478
   - target_path: leanproblems/Minif2f/mathd_numbertheory_284.lean
-    mcp_log_name: mathd_numbertheory_284
   - target_path: leanproblems/Minif2f/imo_1964_p1.lean
-    mcp_log_name: imo_1964_p1
     max_rounds: 5

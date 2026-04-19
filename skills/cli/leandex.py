@@ -2,6 +2,7 @@
 """Search Lean theorems/definitions using Leandex semantic search."""
 import argparse
 import json
+import os
 import logging
 import sys
 from pathlib import Path
@@ -11,7 +12,7 @@ import requests
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler(Path(__file__).parents[2] / "cli.log")],
+    handlers=[logging.FileHandler(Path(os.environ.get("CLI_LOG_PATH", Path(__file__).parents[2] / "cli.log")))],
 )
 logger = logging.getLogger(__name__)
 

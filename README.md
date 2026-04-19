@@ -24,7 +24,7 @@ An agent built on Claude Code for formal theorem proving tasks. We used this sys
 
 ### 1. Environment Setup
 
-Run the following command to set up Lean, Claude Code, and numina-lean-lsp-mcp:
+Run the following command to set up Lean, Claude Code, and the local CLI skills (code-transform, llm, search, sorrifier, verification):
 
 ```bash
 git clone https://github.com/project-numina/numina-lean-agent
@@ -50,7 +50,9 @@ source .venv/bin/activate
 
 ### 2. Run Our Agent
 
-After following the setup instructions, your project will be located at `projects/YOUR_PROJECT_NAME`. Place your Lean code here and start experimenting! 
+After following the setup instructions, your project will be located at `projects/YOUR_PROJECT_NAME`. Place your Lean code here and start experimenting!
+
+> **Note:** The target `.lean` file or folder you pass to `run` / `batch` / `from-folder` must live **inside a Lean project** (an ancestor directory contains `lean-toolchain` and `lakefile.{lean,toml}`). The CLI skills walk up from the target to find the project root and invoke `lake env lean` there — a standalone `.lean` file outside any project will fail to compile.
 
 #### Quick Examples
 
@@ -65,26 +67,22 @@ Before running the examples, you need to configure Claude Code. Choose one of th
 ```bash
 export ANTHROPIC_BASE_URL=xxx      # Optional: custom API endpoint
 export ANTHROPIC_AUTH_TOKEN=xxx    # Your API key
-export ANTHROPIC_MODEL=xxx         # Model name (e.g., anthropic/claude-opus-4.5)
+export ANTHROPIC_MODEL=xxx         # Model name (e.g., anthropic/claude-opus-4.7)
+export OPENAI_API_KEY              # OpenAI API key, optional, seldom use
+export LEAN_LEANDEX_API_KEY        # LeanDex API key
+export GEMINI_API_KEY              # Gemini API key, for discussion partner
 ```
 
 
-Once configured, you can use the following commands to get started:
+Once configured, the quickest way to try it out is:
 
 ```bash
-# Run on a single file
-python -m scripts.run_claude run leanproblems/Minif2f/mathd_algebra_478.lean \
-  --prompt-file prompts/prompt_complete_file.txt \
-  --max-rounds 5
-
-# Run batch tasks from config
-python -m scripts.run_claude batch config/config_minif2f.yaml
-
-# Run all .lean files in a folder
-python -m scripts.run_claude from-folder leanproblems/Minif2f \
-  --prompt-file prompts/prompt_complete_file.txt \
-  --max-rounds 5
+bash ./example_run.sh [target_folder]
 ```
+
+This runs `from-folder` with the autosearch coordinator prompt, a timestamped `--result-dir`, `--max-rounds 10`, and the `REFERENCE_RESOURCES` env var pre-set. Edit the script to tweak defaults or switch between `run` / `batch` / `from-folder`.
+
+Per-task outputs (including an isolated `cli.log`, `cli_stats.json`, per-round JSON, and the raw Claude stream) land under `results/<run_id>/<task_id>/`. See the [Usage Guide](tutorial/usage.md#output) for the full layout.
 
 #### Detailed Docs
 For comprehensive instructions on using our agent, check out:
@@ -93,7 +91,6 @@ For comprehensive instructions on using our agent, check out:
 
 ## Related Projects
 
-- [numina-lean-lsp-mcp](https://github.com/project-numina/lean-lsp-mcp) - MCP server for Lean LSP integration (based on [lean-lsp-mcp](https://github.com/oOo0oOo/lean-lsp-mcp))
 - [lean4-skills](https://github.com/cameronfreer/lean4-skills) - Claude Code skills for Lean 4
 - [Leandex](https://leandex.projectnumina.ai) - Semantic search for Lean codebases
 
