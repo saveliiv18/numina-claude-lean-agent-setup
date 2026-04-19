@@ -67,7 +67,7 @@ Before running the examples, you need to configure Claude Code. Choose one of th
 ```bash
 export ANTHROPIC_BASE_URL=xxx      # Optional: custom API endpoint
 export ANTHROPIC_AUTH_TOKEN=xxx    # Your API key
-export ANTHROPIC_MODEL=xxx         # Model name (e.g., anthropic/claude-opus-4.7)
+export ANTHROPIC_MODEL=xxx         # Model name (e.g., claude-opus-4-7)
 ```
 
 #### Skill API Keys
