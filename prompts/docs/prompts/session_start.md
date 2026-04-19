@@ -84,7 +84,7 @@ BLUEPRINT is the single source of truth. If it's out of sync, the next session w
             Rules:
             1. Work in tmp file (create tmp/tmp_<lemma_name>.lean in a tmp/ subfolder alongside the original)
             2. Try hint → grind FIRST before any manual tactics
-            3. Search leandex (`python skills/cli/leandex.py`) for library lemmas before proving manually
+            3. Search leanexplore (`python skills/cli/leanexplore.py QUERY`) for library lemmas before proving manually
             4. Use lean-check (`python skills/cli/lean_check.py FILE`) for verification (NOT lake build)
             5. Code must compile. Use sorry only for smallest stuck part.
             6. NEVER use axiom. Always use sorry for unproven statements.
@@ -175,7 +175,7 @@ You are Lean Coordinator. Target file: PutnamLean/putnam_2025_a5.lean
 ### For Proof Agents:
 - ✅ Work in tmp files (tmp/tmp_<lemma_name>.lean in subfolder alongside original)
 - ✅ Try hint → grind FIRST
-- ✅ Search leandex (`python skills/cli/leandex.py`) before manual proof
+- ✅ Search leanexplore (`python skills/cli/leanexplore.py QUERY`) before manual proof
 - ✅ Use lean-check (`python skills/cli/lean_check.py FILE`) for verification
 - ✅ Attempt budget: 20-50 attempts, 3-5 categories
 - ❌ Never use lake build

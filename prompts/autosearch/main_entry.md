@@ -9,7 +9,7 @@ When you launch a subagent, you MUST:
 2. **Include the absolute path** to its corresponding prompt file and instruct it to read and follow that prompt
 3. **Include the absolute path** to the reference resources (listed below) and instruct it to read them -- they are written by expert mathematicians and are critical for the proof
 4. **Instruct the subagent** to update its own target entry in CHECKLIST.md after making any progress
-5. Tell the subagent to make good use of the local CLI skills in `skills/cli/` — in particular `leandex.py` (semantic mathlib search) and `discussion_partner.py` (ask Gemini / GPT for proof strategy hints). All verification must go through `lean_check.py` (never `lake build` for per-file checks).
+5. Tell the subagent to make good use of the local CLI skills in `skills/cli/` — in particular `leanexplore.py` (semantic mathlib search, invoked as `python skills/cli/leanexplore.py QUERY`) and `discussion_partner.py` (ask Gemini / GPT for proof strategy hints). All verification must go through `lean_check.py` (never `lake build` for per-file checks).
 
 After a subagent returns, you MUST update CHECKLIST.md to reflect the result.
 

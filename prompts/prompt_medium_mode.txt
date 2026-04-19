@@ -111,7 +111,7 @@ These are your tools for this session (exact invocations in `skills/SKILL.md`):
 | Tool | Purpose | When to use |
 |------|---------|-------------|
 | **lean-check** | Compile & verify file (`python skills/cli/lean_check.py FILE`) | After every change — fast, use freely |
-| **leandex** | Semantic lemma search | Whenever stuck or looking for a Mathlib lemma |
+| **leanexplore** | Semantic lemma search | Whenever stuck or looking for a Mathlib lemma |
 | **loogle** | Pattern-based lemma search | When you know the type shape |
 | **informal-prover** | Get informal proof from Gemini | Before formalizing, or when stuck |
 | **discussion-partner** | Discuss strategy with Gemini | Any question about approach or math |

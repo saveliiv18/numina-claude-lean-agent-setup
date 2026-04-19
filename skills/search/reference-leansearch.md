@@ -24,4 +24,4 @@ python skills/cli/leansearch.py "Nat.add_comm"
 ## Notes
 
 - Accepts both plain English and Lean identifier/term queries.
-- Complements `leandex` and `leanfinder`; use multiple search tools in parallel when unsure which lemma name to look for.
+- Complements `leanexplore` and `leanfinder`; use multiple search tools in parallel when unsure which lemma name to look for.

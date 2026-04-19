@@ -9,7 +9,7 @@ description: "Lean 4 theorem proving toolkit: search lemmas, verify proofs, repa
 
 | Skill | Description |
 |-------|-------------|
-| [search](search/SKILL.md) | Search tools: leandex, loogle, leanfinder, leansearch, state-search, hammer-premise |
+| [search](search/SKILL.md) | Search tools: leanexplore, loogle, leanfinder, leansearch, state-search, hammer-premise |
 | [verification](verification/SKILL.md) | Verification: lean-check, verify-proof, disprove |
 | [code-transform](code-transform/SKILL.md) | Code transforms: repair-proofs, simplify-theorems, sorry2lemma, extract-theorems |
 | [llm](llm/SKILL.md) | LLM tools: informal_prover, discussion_partner, code_golf |

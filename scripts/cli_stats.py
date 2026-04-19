@@ -17,11 +17,11 @@ from pathlib import Path
 # Log line format (see skills/cli/*.py):
 #   "%(asctime)s %(name)s %(levelname)s %(message)s"
 # Example:
-#   2026-04-17 01:52:08,119 __main__ INFO leandex.search called: num_results=5 query='...'
+#   2026-04-17 01:52:08,119 __main__ INFO leanexplore.search called: num_results=5 query='...'
 _LOG_LINE_RE = re.compile(
     r"^(?P<ts>\S+ \S+)\s+(?P<logger>\S+)\s+(?P<level>\S+)\s+(?P<msg>.*)$"
 )
-# Tool name = leading identifier in the message (optionally dotted, e.g. leandex.search).
+# Tool name = leading identifier in the message (optionally dotted, e.g. leanexplore.search).
 _TOOL_RE = re.compile(r"^(?P<tool>[a-zA-Z_][\w.]*)\b")
 
 
@@ -38,7 +38,7 @@ def _tool_key(msg: str) -> str | None:
     m = _TOOL_RE.match(msg)
     if not m:
         return None
-    # Collapse "leandex.search" -> "leandex"
+    # Collapse "leanexplore.search" -> "leanexplore"
     return m.group("tool").split(".", 1)[0]
 
 

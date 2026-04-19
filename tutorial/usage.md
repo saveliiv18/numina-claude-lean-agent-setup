@@ -286,7 +286,7 @@ If `result_dir` is set, each task writes under `<result_dir>/<task_id>/`:
 
 ### CLI Skill Log (`$CLI_LOG_PATH`)
 
-Each script under `skills/cli/` (`lean_check.py`, `leandex.py`, `loogle.py`, `discussion_partner.py`, `informal_prover.py`, …) logs every invocation via Python `logging.FileHandler`. The log path is driven by the `CLI_LOG_PATH` environment variable:
+Each script under `skills/cli/` (`lean_check.py`, `leanexplore.py`, `loogle.py`, `discussion_partner.py`, `informal_prover.py`, …) logs every invocation via Python `logging.FileHandler`. The log path is driven by the `CLI_LOG_PATH` environment variable:
 
 - **When the runner is used with `--result-dir`**: the runner sets `CLI_LOG_PATH=<result_dir>/<task_id>/cli.log` in the Claude subprocess env, so each task gets an **isolated log file** — safe for parallel runs.
 - **When `CLI_LOG_PATH` is unset** (e.g. you call a skill script directly from the shell): scripts fall back to the shared default `<repo_root>/cli.log`.
@@ -297,14 +297,14 @@ tail -f results/<run_id>/<task_id>/cli.log
 
 # Standalone use — shared default log at repo root
 tail -f cli.log
-grep leandex cli.log
+grep leanexplore cli.log
 ```
 
 To override the log path manually (e.g., in a script or test):
 
 ```bash
 export CLI_LOG_PATH=/tmp/my_cli.log
-python skills/cli/leandex.py "..."
+python skills/cli/leanexplore.py "..."
 ```
 
 ### Console Output

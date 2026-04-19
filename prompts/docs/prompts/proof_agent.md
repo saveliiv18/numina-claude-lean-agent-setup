@@ -12,7 +12,7 @@ Common rules include:
 - No axioms policy (use sorry)
 - Blueprint synchronization
 - Status comment format
-- Tool priority order (leandex → loogle, hint → grind)
+- Tool priority order (leanexplore → loogle, hint → grind)
 - Agent log recording
 - Error response protocol
 
@@ -583,7 +583,7 @@ Can you break this down into 2-3 smaller sub-lemmas that would be easier to prov
 [paste lemma]
 
 I've searched mathlib with:
-- leandex (`python skills/cli/leandex.py`): [queries tried]
+- leanexplore (`python skills/cli/leanexplore.py QUERY`): [queries tried]
 - loogle (`python skills/cli/loogle.py`): [patterns tried]
 
 But haven't found the right lemma. Can you suggest:
@@ -628,7 +628,7 @@ Can you suggest a simpler or more direct way to structure this proof?"
 │  CORE PRINCIPLE: SEARCH BEFORE YOU PROVE!                       │
 │                                                                 │
 │  Whenever you see a goal that looks "classic" or "standard",    │
-│  IMMEDIATELY search leandex before attempting any proof.        │
+│  IMMEDIATELY search leanexplore before attempting any proof.   │
 │                                                                 │
 │  DON'T waste attempts proving what mathlib already has!         │
 └─────────────────────────────────────────────────────────────────┘
@@ -636,12 +636,12 @@ Can you suggest a simpler or more direct way to structure this proof?"
 
 **Tools** (use in this order):
 
-1. **leandex** (FIRST CHOICE - semantic search): `python skills/cli/leandex.py QUERY`
+1. **leanexplore** (FIRST CHOICE - semantic search): `python skills/cli/leanexplore.py QUERY`
    ```
    Examples:
-   - python skills/cli/leandex.py "power of -1 alternates between 1 and -1"
-   - python skills/cli/leandex.py "(-1)^(n+1) = -(-1)^n"
-   - python skills/cli/leandex.py "bijection preserves cardinality"
+   - python skills/cli/leanexplore.py "power of -1 alternates between 1 and -1"
+   - python skills/cli/leanexplore.py "(-1)^(n+1) = -(-1)^n"
+   - python skills/cli/leanexplore.py "bijection preserves cardinality"
    ```
 
 2. **loogle** (SECOND CHOICE - type pattern matching): `python skills/cli/loogle.py QUERY`
@@ -654,8 +654,8 @@ Can you suggest a simpler or more direct way to structure this proof?"
 3. **Grep/Glob** (fast local confirmation in current project)
 
 **Pattern for 10 attempts**:
-- Attempt 1-4: leandex with different natural language phrasings
-- Attempt 5-6: leandex focusing on key operation names
+- Attempt 1-4: leanexplore with different natural language phrasings
+- Attempt 5-6: leanexplore focusing on key operation names
 - Attempt 7-8: loogle with type patterns
 - Attempt 9-10: Re-search with Gemini hints from checkpoints
 
@@ -797,7 +797,7 @@ Is N == 0, 2, 4, 8, 16, or 32?
 
 **Before coding**:
 - Run **lean-check** to see current proof state and errors
-- If goal looks classic → search with leandex
+- If goal looks classic → search with leanexplore
 - Always try hint/grind first
 
 **During coding**:
@@ -878,7 +878,7 @@ Before even THINKING about giving up:
 [ ] Have I reached my attempt budget? (N >= [budget])
 [ ] Have I tried all required categories? (each ≥5 attempts)
 [ ] Did I consult Gemini at ALL checkpoints (2, 4, 8, 16, 32)?
-[ ] Have I searched mathlib thoroughly? (leandex, loogle)
+[ ] Have I searched mathlib thoroughly? (leanexplore, loogle)
 [ ] Have I tried hint and grind on every goal?
 [ ] Have I tried both tactic mode and term mode?
 [ ] Have I tried decomposing into helper lemmas?
@@ -909,7 +909,7 @@ All tools are CLI scripts in `skills/cli/`. For full parameters, read `skills/<c
 
 | Tool | CLI | When to use |
 |------|-----|-------------|
-| **leandex** | `python skills/cli/leandex.py QUERY` | PRIMARY - semantic search (max 5 parallel) |
+| **leanexplore** | `python skills/cli/leanexplore.py QUERY` | PRIMARY - semantic search (max 5 parallel) |
 | **loogle** | `python skills/cli/loogle.py QUERY` | Type pattern matching |
 | **Grep/Glob** | built-in | Fast local confirmation in current project |
 
