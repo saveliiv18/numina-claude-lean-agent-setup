@@ -68,11 +68,18 @@ Before running the examples, you need to configure Claude Code. Choose one of th
 export ANTHROPIC_BASE_URL=xxx      # Optional: custom API endpoint
 export ANTHROPIC_AUTH_TOKEN=xxx    # Your API key
 export ANTHROPIC_MODEL=xxx         # Model name (e.g., anthropic/claude-opus-4.7)
-export OPENAI_API_KEY              # OpenAI API key, optional, seldom use
-export LEAN_LEANDEX_API_KEY        # LeanDex API key
-export GEMINI_API_KEY              # Gemini API key, for discussion partner
 ```
 
+#### Skill API Keys
+
+The CLI skills under `skills/cli/` call external services and need their own credentials. These are **separate from Claude's auth above** — the agent will fail at the corresponding skill invocation if they are missing.
+
+```bash
+export GEMINI_API_KEY=xxx          # Required: discussion_partner, informal_prover (gemini), code_golf
+export LEAN_LEANDEX_API_KEY=xxx    # Required: leandex (semantic Mathlib search)
+export OPENAI_API_KEY=xxx          # Required only if you use informal_prover / discussion_partner with the gpt backend
+export AXLE_API_KEY=xxx            # Required only for axle commands (verify-proof, disprove, sorry2lemma, ...)
+```
 
 Once configured, the quickest way to try it out is:
 
