@@ -90,7 +90,7 @@ lemma name : statement := by
 State: 🔄 partial
 Priority: 1
 Attempts: 12 / 20
-tmp file: PutnamLean/tmp_base_case.lean
+tmp file: tmp/tmp_base_case.lean
 -/
 lemma base_case (n : ℕ) : f 0 = 1 := by
   have h : 0! = 1 := Nat.factorial_zero
@@ -106,13 +106,13 @@ lemma base_case (n : ℕ) : f 0 = 1 := by
 ### Protocol
 1. **Note tmp file** in original file's status comment
    ```lean
-   tmp file: tmp_<lemma_name>.lean
+   tmp file: tmp/tmp_<lemma_name>.lean
    ```
 
-2. **Create tmp file** in same directory as original
+2. **Create tmp file** in a `tmp/` subfolder alongside the original file
    ```bash
-   # If original is PutnamLean/Example.lean
-   # Create PutnamLean/tmp_base_case.lean
+   # If original is Experiment/main_theorem.lean
+   # Create Experiment/tmp/tmp_base_case.lean
    ```
 
 3. **Work in tmp file**
@@ -131,8 +131,8 @@ lemma base_case (n : ℕ) : f 0 = 1 := by
 
 ### Example Tmp File
 ```lean
--- File: PutnamLean/tmp_base_case.lean
-import PutnamLean.Example
+-- File: Experiment/tmp/tmp_base_case.lean
+import Experiment.MainTheorem
 
 lemma base_case (n : ℕ) : f 0 = 1 := by
   -- Working proof here
@@ -150,19 +150,19 @@ lemma base_case (n : ℕ) : f 0 = 1 := by
 **ALWAYS search in this order:**
 
 ```
-1. leandex    (semantic search - natural language)
+1. leandex    (python skills/cli/leandex.py QUERY)
    ↓ (if not found)
-2. loogle     (type pattern matching)
+2. loogle     (python skills/cli/loogle.py QUERY)
    ↓ (if not found)
-3. local_search (fast confirmation in current project)
+3. Grep/Glob  (fast confirmation in current project)
 ```
 
 ### Why This Order
 - **leandex**: Understands natural language, finds lemmas by concept
-  - Example: "factorial of zero equals one"
+  - Example: `python skills/cli/leandex.py "factorial of zero equals one"`
 - **loogle**: Requires exact type patterns, more precise but harder
-  - Example: `?f (?x + ?y) = ?f ?x + ?f ?y`
-- **local_search**: Fast but limited to current project
+  - Example: `python skills/cli/loogle.py "?f (?x + ?y) = ?f ?x + ?f ?y"`
+- **Grep/Glob**: Fast but limited to current project files
 
 ### CRITICAL: Don't Give Up If Mathlib Doesn't Have It
 
@@ -240,7 +240,7 @@ theorem foo : P := by
 Only if both hint and grind fail:
 1. Read error message carefully
 2. Check goal state
-3. Search for lemmas (leandex → loogle)
+3. Search for lemmas (leandex → loogle via `skills/cli/`)
 4. Choose appropriate tactic manually
 
 ### Example Flow
@@ -402,7 +402,7 @@ lemma foo : P := by
 |-----------|-----|---------------|
 | Use `axiom` | Invalidates proofs | Use `sorry` |
 | Work in original file | Clutters code, context explosion | Use tmp files |
-| Skip leandex | Miss obvious lemmas | Always leandex first |
+| Skip leandex search | Miss obvious lemmas | Always leandex first |
 | Manual tactics first | Waste time | `hint` → `grind` → manual |
 | Forget blueprint | State goes stale | Update immediately |
 | Skip agent log | Lose learnings | Log every execution |
@@ -420,7 +420,7 @@ All agents must follow these rules:
 2. ✅ Update BLUEPRINT immediately after progress
 3. ✅ Add status comments to all lemmas
 4. ✅ Work in tmp files for proof attempts
-5. ✅ Search: leandex → loogle → local_search
+5. ✅ Search: leandex → loogle → Grep/Glob
 6. ✅ Tactics: hint → grind → manual
 7. ✅ Try automation before manual analysis
 8. ✅ Create agent log for every execution

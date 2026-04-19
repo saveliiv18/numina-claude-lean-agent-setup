@@ -87,6 +87,17 @@ Final: Combining steps 1-N completes the proof.
 - If proof is >20 lines informal → SPLIT
 - Otherwise → Just update informal proof, don't split
 
+**File Splitting Decision:**
+When splitting into sub-lemmas, also decide whether they should go in a **separate helper file**:
+- If the sub-lemmas are **mathematically independent** (only need Mathlib, not definitions from the main file) → put them in `<main_file>_helpers.lean`
+- If the sub-lemmas depend on definitions in the main file → keep them in the same file
+- Helper files must only `import Mathlib` — no cross-imports between helper files
+
+When placing sub-lemmas in a helper file, update the `file` field in the blueprint accordingly. The proof agent will need to:
+1. Write and check the helper file with `python skills/cli/lean_check.py`
+2. Run `lake build <Project>.<HelperModule>` to produce `.olean`
+3. Import the helper file from the main file
+
 ### Step 4: Update Blueprint
 
 #### Case A: No Splitting Needed
@@ -287,7 +298,7 @@ Successfully split lemma into 3 sub-lemmas with detailed informal proofs.
 **Result**: SUCCESS (split into 3 sub-lemmas)
 **Total Sub-Lemmas Created**: 3
 **Key Approach**: Gemini analysis + splitting by proof steps
-**Gemini Tool**: discussion_partner
+**Gemini Tool**: `python skills/cli/discussion_partner.py`
 
 ## Learnings
 1. Complex proofs benefit from step-by-step breakdown before formalization

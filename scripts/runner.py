@@ -56,7 +56,7 @@ def run_claude_once(
 
     Args:
         args: Claude command arguments list
-        env: Environment variables (MCP_LOG_NAME should be set here)
+        env: Environment variables for the subprocess
         cwd: Working directory
         json_save_path: Path to save the raw NDJSON stream (.jsonl file)
 
@@ -82,12 +82,9 @@ def run_claude_once(
         )
         proc.wait()
     current_pid = os.getpid()
-    env_info = env or {}
     print(
         f"[info] Claude pid={proc.pid}, runner pid={current_pid},\n"
-        f"one-click kill command: kill -TERM {current_pid} -- -{proc.pid}\n"
-        f"MCP_LOG_DIR: {env_info.get('MCP_LOG_DIR')}\n"
-        f"MCP_LOG_NAME: {env_info.get('MCP_LOG_NAME')}"
+        f"one-click kill command: kill -TERM {current_pid} -- -{proc.pid}"
     )
 
     last_line = ""
@@ -161,7 +158,7 @@ def run_claude_session(
         output_format: Output format (json / None)
         max_rounds: Maximum rounds
         sleep_between_rounds: Sleep between rounds
-        env: Environment variables (MCP_LOG_NAME should be set here)
+        env: Environment variables for the subprocess
         on_complete: Callback when COMPLETE is received, returns False to resend prompt
         tracker: Statement tracker for detecting changes
         on_statement_change: Action on statement change ("error" to stop, "warn" to continue)
@@ -407,7 +404,7 @@ def run_task(task: TaskMetadata) -> TaskResult:
     """
     start_time = datetime.now()
     error_message = None
-    mcp_stats = None
+    cli_stats = None
     round_results: List[RoundResult] = []
     statement_changed = False
     safe_verify_result: Optional[SafeVerifyResult] = None
@@ -417,11 +414,12 @@ def run_task(task: TaskMetadata) -> TaskResult:
         # Get prompt
         prompt = task.get_prompt()
 
-        # Build environment with MCP_LOG_NAME
+        # Build environment for the subprocess (sets CLI_LOG_PATH when result_dir is set)
         env = task.build_env()
 
-        # Get MCP log path for later analysis
-        mcp_log_path = get_mcp_log_path(task.mcp_log_name, task.mcp_log_dir)
+        # Per-task CLI log (isolated from other tasks). Falls back to the shared
+        # default when result_dir is not set.
+        cli_log_path = Path(env["CLI_LOG_PATH"]) if "CLI_LOG_PATH" in env else get_cli_log_path()
 
         # Get files to track
         if task.task_type == "file":
@@ -536,12 +534,12 @@ def run_task(task: TaskMetadata) -> TaskResult:
                     if not task.allow_sorry: # Only set to COMPLETE if allow_sorry is False (which means the file is indeed done)
                         end_reason = "COMPLETE"
 
-        # Analyze MCP stats if result_dir is specified
-        if task.result_dir and mcp_log_path and mcp_log_path.exists():
+        # Analyze CLI skill call stats if result_dir is specified
+        if task.result_dir and cli_log_path.exists():
             stats_dir = Path(task.result_dir) / task.task_id
             stats_dir.mkdir(parents=True, exist_ok=True)
-            print(f"[info] Generating MCP stats to {stats_dir}")
-            mcp_stats = analyze_mcp_log(str(mcp_log_path), str(stats_dir))
+            print(f"[info] Generating CLI skill stats from {cli_log_path} to {stats_dir}")
+            cli_stats = analyze_cli_log(str(cli_log_path), str(stats_dir))
 
         # Run SafeVerify if configured (file tasks only) and if the proof compiled
         if task.safe_verify_path and task.task_type == "file" and sv_target_path:
@@ -597,7 +595,7 @@ def run_task(task: TaskMetadata) -> TaskResult:
         start_time=start_time,
         end_time=end_time,
         error_message=error_message,
-        mcp_stats=mcp_stats,
+        cli_stats=cli_stats,
         round_results=round_results,
         statement_changed=statement_changed,
         safe_verify_result=safe_verify_result,

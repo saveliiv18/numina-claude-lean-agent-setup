@@ -59,24 +59,29 @@ else
     source "$HOME/.local/bin/env" 2>/dev/null || true
 fi
 
-# 5. Setup lean-lsp-mcp
+# 5. Install local CLI skills
 echo ""
-echo "[5/5] Setting up lean-lsp-mcp..."
-MCP_DIR="$HOME/lean-lsp-mcp"
-if [ -d "$MCP_DIR" ]; then
-    echo "lean-lsp-mcp already exists at $MCP_DIR, updating..."
-    cd "$MCP_DIR"
-    git pull
-else
-    git clone https://github.com/project-numina/lean-lsp-mcp "$MCP_DIR"
-fi
-chmod +x "$MCP_DIR/numina-lean-mcp.sh"
+echo "[5/5] Installing local CLI skills..."
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+SKILLS_SRC="$REPO_ROOT/skills"
+PROJECT_PATH="$PROJECT_DIR/$PROJECT_NAME"
+SKILLS_DST="$PROJECT_PATH/.claude/skills"
 
-# Add MCP to Claude Code (from project directory)
-cd "$PROJECT_DIR/$PROJECT_NAME" 2>/dev/null || cd "$PROJECT_NAME"
-echo "Adding MCP server to Claude Code..."
-claude mcp remove lean-lsp 2>/dev/null || true
-claude mcp add lean-lsp -- "$MCP_DIR/numina-lean-mcp.sh"
+if [ ! -d "$SKILLS_SRC" ]; then
+    echo "Error: skills source not found at $SKILLS_SRC"
+    exit 1
+fi
+
+mkdir -p "$SKILLS_DST"
+for skill in code-transform llm search sorrifier verification; do
+    if [ -d "$SKILLS_SRC/$skill" ]; then
+        echo "  installing $skill..."
+        rm -rf "$SKILLS_DST/$skill"
+        cp -r "$SKILLS_SRC/$skill" "$SKILLS_DST/"
+    else
+        echo "  warning: $skill not found in $SKILLS_SRC, skipping..."
+    fi
+done
 
 echo ""
 echo "========================================"
@@ -84,10 +89,12 @@ echo "Setup complete!"
 echo "========================================"
 echo ""
 echo "To verify installation:"
-echo "  claude mcp list"
+echo "  cd $PROJECT_PATH"
+echo "  claude"
+echo "  # then type /skills inside Claude Code"
 echo ""
 echo "To start working:"
-echo "  cd $PROJECT_DIR/$PROJECT_NAME"
+echo "  cd $PROJECT_PATH"
 echo "  claude"
 echo ""
 echo "For more details, see: tutorial/setup.md"
