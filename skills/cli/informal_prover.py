@@ -121,7 +121,7 @@ Provide **only** the revised solution below.
 """
 
 
-def _call_gemini(prompt: str, model: str, temperature: float) -> str | None:
+def _call_gemini(prompt: str, model: str, temperature: float) -> tuple[str | None, int, int]:
     from google import genai
     from google.genai import types
 
@@ -137,14 +137,18 @@ def _call_gemini(prompt: str, model: str, temperature: float) -> str | None:
             contents=prompt,
             config=types.GenerateContentConfig(temperature=temperature),
         )
-        return response.text if response.text else None
+        usage = response.usage_metadata
+        in_tok = getattr(usage, "prompt_token_count", 0) or 0
+        out_tok = getattr(usage, "candidates_token_count", 0) or 0
+        logger.info("_call_gemini: in_tokens=%d out_tokens=%d", in_tok, out_tok)
+        return (response.text if response.text else None), in_tok, out_tok
     except Exception as e:
         logger.exception("_call_gemini failed: %s", e)
         print(f"LLM error: {e}", file=sys.stderr)
-        return None
+        return None, 0, 0
 
 
-def _call_gpt(prompt: str, model: str, temperature: float) -> str | None:
+def _call_gpt(prompt: str, model: str, temperature: float) -> tuple[str | None, int, int]:
     from openai import OpenAI
 
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -160,13 +164,17 @@ def _call_gpt(prompt: str, model: str, temperature: float) -> str | None:
             reasoning={"effort": "high"},
             text={"verbosity": "high"},
         )
+        usage = response.usage
+        in_tok = getattr(usage, "input_tokens", 0) or 0
+        out_tok = getattr(usage, "output_tokens", 0) or 0
+        logger.info("_call_gpt: in_tokens=%d out_tokens=%d", in_tok, out_tok)
         if response.output:
-            return response.output[-1].content[0].text
-        return None
+            return response.output[-1].content[0].text, in_tok, out_tok
+        return None, in_tok, out_tok
     except Exception as e:
         logger.exception("_call_gpt failed: %s", e)
         print(f"LLM error: {e}", file=sys.stderr)
-        return None
+        return None, 0, 0
 
 
 def prove(
@@ -182,7 +190,7 @@ def prove(
         model = model or "gemini-3.1-pro-preview"
         call_llm = lambda p: _call_gemini(p, model, temperature)
     elif backend == "gpt":
-        model = model or "gpt-5.2-pro"
+        model = model or "gpt-5.4-pro"
         call_llm = lambda p: _call_gpt(p, model, temperature)
     else:
         print(f"Error: backend must be 'gemini' or 'gpt', got '{backend}'", file=sys.stderr)
@@ -190,6 +198,8 @@ def prove(
 
     solution = None
     verification = None
+    total_in_tok = 0
+    total_out_tok = 0
 
     for attempt in range(1, max_attempts + 1):
         # Generate solution
@@ -202,18 +212,24 @@ def prove(
                 problem=math_problem, solution=solution, feedback=verification
             )
 
-        solution = call_llm(prompt)
+        solution, in_tok, out_tok = call_llm(prompt)
+        total_in_tok += in_tok
+        total_out_tok += out_tok
         if not solution:
             if attempt == max_attempts:
+                logger.info("prove done: in_tokens=%d out_tokens=%d", total_in_tok, total_out_tok)
                 print(json.dumps({"solution": None, "verification": "Failed to generate solution"}))
                 return
             continue
 
         # Verify
         verify_prompt = VERIFY_PROMPT.format(problem=math_problem, student_solution=solution)
-        verification = call_llm(verify_prompt)
+        verification, in_tok, out_tok = call_llm(verify_prompt)
+        total_in_tok += in_tok
+        total_out_tok += out_tok
         if not verification:
             if attempt == max_attempts:
+                logger.info("prove done: in_tokens=%d out_tokens=%d", total_in_tok, total_out_tok)
                 print(json.dumps({"solution": solution, "verification": "Verification failed (API error)"}))
                 return
             continue
@@ -223,14 +239,14 @@ def prove(
         score = match.group(1).strip() if match else None
 
         if score == "1":
-            logger.info("prove succeeded on attempt %d", attempt)
+            logger.info("prove succeeded on attempt %d in_tokens=%d out_tokens=%d", attempt, total_in_tok, total_out_tok)
             result = {"solution": solution, "verification": "correct", "attempts": attempt}
             print(json.dumps(result, ensure_ascii=False))
             _log(log_dir, math_problem, solution, "correct")
             return
 
         if attempt == max_attempts:
-            logger.warning("prove exhausted attempts (%d), final score=%s", max_attempts, score)
+            logger.warning("prove exhausted attempts (%d) final score=%s in_tokens=%d out_tokens=%d", max_attempts, score, total_in_tok, total_out_tok)
             result = {"solution": solution, "verification": f"incorrect\n{verification}", "attempts": attempt}
             print(json.dumps(result, ensure_ascii=False))
             _log(log_dir, math_problem, solution, f"incorrect\n{verification}")
@@ -256,7 +272,10 @@ def _log(log_dir: str | None, problem: str, solution: str, verification: str) ->
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Solve math problems with LLM + verification")
-    parser.add_argument("problem", help="Math problem text (or - for stdin)")
+    parser.add_argument("problem", nargs="?", default=None,
+                        help="Math problem text, '-' or omit to read from stdin")
+    parser.add_argument("--file", "-f", default=None, metavar="PATH",
+                        help="Read problem from a file (avoids shell escaping issues)")
     parser.add_argument("--backend", choices=["gemini", "gpt"], default="gemini", help="LLM backend")
     parser.add_argument("--model", default=None, help="Override model name")
     parser.add_argument("--temperature", type=float, default=0.7)
@@ -264,5 +283,10 @@ if __name__ == "__main__":
     parser.add_argument("--log-dir", default=None, help="Directory for logging results")
     args = parser.parse_args()
 
-    problem = sys.stdin.read() if args.problem == "-" else args.problem
+    if args.file:
+        problem = Path(args.file).read_text(encoding="utf-8")
+    elif args.problem is None or args.problem == "-":
+        problem = sys.stdin.read()
+    else:
+        problem = args.problem
     prove(problem, args.backend, args.model, args.temperature, args.max_attempts, args.log_dir)

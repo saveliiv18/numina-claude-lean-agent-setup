@@ -17,7 +17,7 @@ import signal
 
 from .task import TaskMetadata, TaskResult
 from .lean_checker import find_lean_files, check_lean_files_parallel
-from .mcp_stats import analyze_mcp_log, get_mcp_log_path
+from .cli_stats import analyze_cli_log, get_cli_log_path
 from .safe_verify import snapshot_target, run_safe_verify, SafeVerifyResult
 from .statement_tracker import StatementTracker, RoundResult, extract_claude_usage, StatementChange
 

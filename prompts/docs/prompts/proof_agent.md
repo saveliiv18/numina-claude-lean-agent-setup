@@ -211,10 +211,11 @@ lemma baz (n : ℕ) (h : n < 4) : R n := by
 - `fin_cases` / `interval_cases`
 - Manual exhaustive case splits
 
-**YOU MUST** call **discussion-partner** (`python skills/cli/discussion_partner.py`) with this query:
+**YOU MUST** call **discussion-partner** with this query (use heredoc to avoid shell escaping issues):
 
-```
-"I'm about to prove this goal by enumeration/case analysis:
+```bash
+python skills/cli/discussion_partner.py <<'EOF'
+I'm about to prove this goal by enumeration/case analysis:
 
 Goal: [paste goal]
 Context: [paste relevant hypotheses]
@@ -226,7 +227,8 @@ Before I do that:
 2. Is there a mathlib lemma that proves this generally?
 3. If enumeration is truly necessary, is there a cleaner way?
 
-Please suggest a general approach if possible."
+Please suggest a general approach if possible.
+EOF
 ```
 
 **Only proceed with enumeration if Gemini confirms**:
@@ -917,7 +919,7 @@ All tools are CLI scripts in `skills/cli/`. For full parameters, read `skills/<c
 
 | Tool | CLI | When to use |
 |------|-----|-------------|
-| **discussion-partner** | `python skills/cli/discussion_partner.py QUESTION` | Attempts 0, 2, 4, 16 |
+| **discussion-partner** | `python skills/cli/discussion_partner.py --file /tmp/q.txt` or heredoc `<<'EOF'` | Attempts 0, 2, 4, 16 |
 | **informal-prover** | `python skills/cli/informal_prover.py PROBLEM` | Attempts 0, 8 |
 | **code-golf** | `python skills/cli/code_golf.py LEAN_CODE` | Attempt 32 |
 

@@ -39,7 +39,10 @@ def discuss(question: str, backend: str = "gemini", model: str | None = None) ->
                 config=types.GenerateContentConfig(temperature=0.7),
             )
             if response.text:
-                logger.info("discuss (gemini) succeeded: response_len=%d", len(response.text))
+                usage = response.usage_metadata
+                in_tok = getattr(usage, "prompt_token_count", 0) or 0
+                out_tok = getattr(usage, "candidates_token_count", 0) or 0
+                logger.info("discuss (gemini) succeeded: response_len=%d in_tokens=%d out_tokens=%d", len(response.text), in_tok, out_tok)
                 print(response.text)
             else:
                 logger.error("Gemini returned empty response")
@@ -51,7 +54,7 @@ def discuss(question: str, backend: str = "gemini", model: str | None = None) ->
             sys.exit(1)
 
     elif backend == "gpt":
-        model = model or "gpt-5.2-pro"
+        model = model or "gpt-5.4-pro"
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             logger.error("OPENAI_API_KEY not set")
@@ -68,7 +71,10 @@ def discuss(question: str, backend: str = "gemini", model: str | None = None) ->
                 text={"verbosity": "high"},
             )
             if response.output:
-                logger.info("discuss (gpt) succeeded")
+                usage = response.usage
+                in_tok = getattr(usage, "input_tokens", 0) or 0
+                out_tok = getattr(usage, "output_tokens", 0) or 0
+                logger.info("discuss (gpt) succeeded: in_tokens=%d out_tokens=%d", in_tok, out_tok)
                 print(response.output[-1].content[0].text)
             else:
                 logger.error("GPT returned empty response")
@@ -86,10 +92,18 @@ def discuss(question: str, backend: str = "gemini", model: str | None = None) ->
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Discuss with Gemini/GPT")
-    parser.add_argument("question", help="Question text (or - for stdin)")
+    parser.add_argument("question", nargs="?", default=None,
+                        help="Question text, '-' or omit to read from stdin")
+    parser.add_argument("--file", "-f", default=None, metavar="PATH",
+                        help="Read question from a file (avoids shell escaping issues)")
     parser.add_argument("--backend", choices=["gemini", "gpt"], default="gemini", help="LLM backend")
     parser.add_argument("--model", default=None, help="Override model name")
     args = parser.parse_args()
 
-    question = sys.stdin.read() if args.question == "-" else args.question
+    if args.file:
+        question = Path(args.file).read_text(encoding="utf-8")
+    elif args.question is None or args.question == "-":
+        question = sys.stdin.read()
+    else:
+        question = args.question
     discuss(question, args.backend, args.model)

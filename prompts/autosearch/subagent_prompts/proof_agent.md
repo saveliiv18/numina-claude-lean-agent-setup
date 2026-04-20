@@ -140,7 +140,9 @@ def should_refine(attempts):
 ```
 python skills/cli/leandex.py "natural language description of what you need"
 python skills/cli/loogle.py  "?f (?x + ?y) = ..." type pattern
-python skills/cli/discussion_partner.py "I need to prove X from Y, what's the strategy?"
+python skills/cli/discussion_partner.py <<'EOF'
+I need to prove X from Y, what's the strategy?
+EOF
 ```
 
 **Automation tactics - use at EVERY opportunity!**
