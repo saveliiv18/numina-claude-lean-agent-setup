@@ -68,16 +68,16 @@ def search(query: str, num_results: int = 5) -> None:
             )
             if result.returncode == 0:
                 if result.stdout:
-                    sys.stdout.write(result.stdout)
+                    print(result.stdout, end="")
                 if result.stderr:
-                    sys.stderr.write(result.stderr)
+                    print(result.stderr, end="", file=sys.stderr)
                 logger.info("leanexplore.search succeeded")
                 return
             logger.warning(
                 "lean-explore exited with code %d, falling back to leandex", result.returncode
             )
             if result.stderr:
-                sys.stderr.write(result.stderr)
+                print(result.stderr, end="", file=sys.stderr)
         except subprocess.TimeoutExpired:
             logger.warning("lean-explore timed out, falling back to leandex")
         except Exception as e:
