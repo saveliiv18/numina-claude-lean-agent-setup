@@ -150,16 +150,16 @@ lemma base_case (n : ℕ) : f 0 = 1 := by
 **ALWAYS search in this order:**
 
 ```
-1. leandex    (python skills/cli/leandex.py QUERY)
+1. leanexplore  (python skills/cli/leanexplore.py QUERY)
    ↓ (if not found)
-2. loogle     (python skills/cli/loogle.py QUERY)
+2. loogle        (python skills/cli/loogle.py QUERY)
    ↓ (if not found)
-3. Grep/Glob  (fast confirmation in current project)
+3. Grep/Glob     (fast confirmation in current project)
 ```
 
 ### Why This Order
-- **leandex**: Understands natural language, finds lemmas by concept
-  - Example: `python skills/cli/leandex.py "factorial of zero equals one"`
+- **leanexplore**: Understands natural language, finds lemmas by concept
+  - Example: `python skills/cli/leanexplore.py "factorial of zero equals one"`
 - **loogle**: Requires exact type patterns, more precise but harder
   - Example: `python skills/cli/loogle.py "?f (?x + ?y) = ?f ?x + ?f ?y"`
 - **Grep/Glob**: Fast but limited to current project files
@@ -240,7 +240,7 @@ theorem foo : P := by
 Only if both hint and grind fail:
 1. Read error message carefully
 2. Check goal state
-3. Search for lemmas (leandex → loogle via `skills/cli/`)
+3. Search for lemmas (leanexplore → loogle via `skills/cli/`)
 4. Choose appropriate tactic manually
 
 ### Example Flow
@@ -298,7 +298,7 @@ Examples:
 | Task | Status | Notes |
 |------|--------|-------|
 | Read current proof state | ✅ Done | Attempt: 12/20 |
-| Try library search (leandex) | ✅ Done | Found lemma |
+| Try library search (leanexplore) | ✅ Done | Found lemma |
 | Apply found lemma | ✅ Done | SUCCESS |
 | Update blueprint | ✅ Done | - |
 
@@ -308,7 +308,7 @@ Examples:
 Starting proof for [lem:base_case], status: 🔄 partial (12/20)
 
 ### [14:31:15] Library Search
-leandex query: "factorial of zero equals one"
+leanexplore query: "factorial of zero equals one"
 Found: Nat.factorial_zero ✓
 
 ### [14:35:28] Attempt 14: SUCCESS
@@ -329,11 +329,11 @@ Proven in 14 attempts.
 ## Summary
 **Result**: SUCCESS
 **Total Attempts**: 14/20
-**Key Approach**: Library search (leandex) + intermediate `have`
+**Key Approach**: Library search (leanexplore) + intermediate `have`
 **Key Lemmas**: Nat.factorial_zero
 
 ## Learnings
-1. leandex highly effective for standard library lemmas
+1. leanexplore highly effective for standard library lemmas
 2. Type mismatches often need intermediate `have` to align types
 3. Unfolding definitions helps expose definitional equality
 ```
@@ -402,14 +402,14 @@ lemma foo : P := by
 |-----------|-----|---------------|
 | Use `axiom` | Invalidates proofs | Use `sorry` |
 | Work in original file | Clutters code, context explosion | Use tmp files |
-| Skip leandex search | Miss obvious lemmas | Always leandex first |
+| Skip leanexplore search | Miss obvious lemmas | Always leanexplore first |
 | Manual tactics first | Waste time | `hint` → `grind` → manual |
 | Forget blueprint | State goes stale | Update immediately |
 | Skip agent log | Lose learnings | Log every execution |
 | Batch blueprint updates | Sync issues | Update after each change |
 | Verbose comments | Code bloat | One-line comments, details in logs |
 | Ignore hint/grind | Miss easy wins | Try automation first |
-| loogle before leandex | Harder syntax | leandex (natural) → loogle (pattern) |
+| loogle before leanexplore | Harder syntax | leanexplore (natural) → loogle (pattern) |
 
 ---
 
@@ -420,7 +420,7 @@ All agents must follow these rules:
 2. ✅ Update BLUEPRINT immediately after progress
 3. ✅ Add status comments to all lemmas
 4. ✅ Work in tmp files for proof attempts
-5. ✅ Search: leandex → loogle → Grep/Glob
+5. ✅ Search: leanexplore → loogle → Grep/Glob
 6. ✅ Tactics: hint → grind → manual
 7. ✅ Try automation before manual analysis
 8. ✅ Create agent log for every execution

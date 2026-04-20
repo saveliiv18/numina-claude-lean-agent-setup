@@ -17,7 +17,7 @@
 2. **`proof_agent.md`** - Understand how proof agents work
    - Tmp file workflow
    - When they request informal refine (at 2^n attempts: 2, 4, 8, 16, 32...)
-   - How they use the local CLI skills (`leandex.py`, `discussion_partner.py`, `lean_check.py`, …)
+   - How they use the local CLI skills (`leanexplore.py`, `discussion_partner.py`, `lean_check.py`, …)
 
 3. **`informal_agent.md`** - Understand how informal agents work
    - How they call Gemini to refine informal solutions

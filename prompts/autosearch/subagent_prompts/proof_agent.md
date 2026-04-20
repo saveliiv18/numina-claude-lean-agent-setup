@@ -12,7 +12,7 @@ Common rules include:
 - No axioms policy (use sorry)
 - Checklist synchronization
 - Sorry marking format
-- Tool priority order (leandex → loogle, hint → grind)
+- Tool priority order (leanexplore → loogle, hint → grind)
 - Temporary file workflow
 
 This file adds proof-agent-specific rules.
@@ -124,11 +124,11 @@ def should_refine(attempts):
 
 #### Step 3: Try the Proof
 
-**Use `leandex` and `discussion_partner` liberally!**
+**Use `leanexplore` and `discussion_partner` liberally!**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  leandex: Search mathlib with natural language                  │
+│  leanexplore: Search mathlib with natural language             │
 │  discussion_partner: Ask Gemini for proof strategy hints        │
 │                                                                 │
 │  Don't hesitate to use these tools frequently!                  │
@@ -138,7 +138,7 @@ def should_refine(attempts):
 
 **Search mathlib EARLY and OFTEN**:
 ```
-python skills/cli/leandex.py "natural language description of what you need"
+python skills/cli/leanexplore.py "natural language description of what you need"
 python skills/cli/loogle.py  "?f (?x + ?y) = ..." type pattern
 python skills/cli/discussion_partner.py <<'EOF'
 I need to prove X from Y, what's the strategy?
@@ -289,21 +289,21 @@ All tools are local CLI scripts under `skills/cli/`. Read `skills/SKILL.md` and 
 ### High-Frequency Tools (use liberally!)
 
 - `python skills/cli/lean_check.py <file>`: Compile + diagnostics (goals, hypotheses, errors) — run after every code change
-- `python skills/cli/leandex.py`: Semantic mathlib search (supports up to 5 parallel queries)
+- `python skills/cli/leanexplore.py QUERY`: Semantic mathlib search (supports up to 5 parallel queries)
 - `python skills/cli/discussion_partner.py`: Ask Gemini/GPT for proof strategy hints
 
 ### Search & Guidance Tools (USE OFTEN!)
 
-- `python skills/cli/leandex.py`: PRIMARY - semantic search for mathlib lemmas
+- `python skills/cli/leanexplore.py QUERY`: PRIMARY - semantic search for mathlib lemmas
 - `python skills/cli/loogle.py`: Type pattern matching
 - `python skills/cli/leanfinder.py` / `leansearch.py`: Alternative semantic search
 - `python skills/cli/state_search.py`: Search by goal/state shape
 - `python skills/cli/hammer_premise.py`: Premise retrieval for automation
 - `python skills/cli/discussion_partner.py`: Ask Gemini for proof strategy hints
 
-**Encourage heavy use of `leandex` and `discussion_partner`!**
+**Encourage heavy use of `leanexplore` and `discussion_partner`!**
 - When stuck, ask `discussion_partner` for ideas
-- When looking for a lemma, search `leandex` first
+- When looking for a lemma, search `leanexplore` first
 - Don't waste attempts guessing - use these tools!
 
 ### Understanding the File
@@ -335,7 +335,7 @@ Update after each step completed.
 Before giving up on any attempt:
 
 - [ ] Did I read the informal solution?
-- [ ] Did I search leandex for relevant lemmas?
+- [ ] Did I search leanexplore for relevant lemmas?
 - [ ] Did I ask discussion_partner for strategy hints?
 - [ ] Did I try hint and grind on the CURRENT goal?
 - [ ] Did I break down with have/suffices and try automation on EACH piece?
@@ -352,12 +352,12 @@ Before giving up on any attempt:
 
 **Success mindset**:
 - "Let me check the informal solution first"
-- "Let me search leandex / ask discussion_partner"
+- "Let me search leanexplore / ask discussion_partner"
 - "Break it down with have, then try automation on each piece"
 - "Automation works better on smaller goals!"
 - "At checkpoint - request informal refine"
 
-**Your success = leandex + discussion_partner + Automation on small goals + Systematic progress**
+**Your success = leanexplore + discussion_partner + Automation on small goals + Systematic progress**
 
 ---
 
@@ -369,7 +369,7 @@ Before giving up on any attempt:
 | USE theorems that have `admit` | Leave sorry "because X has admit" | Treat `admit` as proven; your job is to prove YOUR code |
 | Read & follow human comments | Delete human comments | Human comments contain proof hints like "-- Use :" |
 | Use `/- (by claude) -/` comments | Use `-- ` or unmarked `/- -/` | Your comments must be distinguishable from human's |
-| Search `leandex` first | Guess lemma names blindly | leandex finds lemmas by natural language, saves attempts |
+| Search `leanexplore` first | Guess lemma names blindly | leanexplore finds lemmas by natural language, saves attempts |
 | Ask `discussion_partner` when stuck | Keep trying same approach | Gemini can suggest new strategies |
 | Try `hint`/`grind` after each `have` | Only try automation at start | Automation works better on smaller goals |
 | Work in tmp files | Edit original file directly | Keeps original clean; allows experimentation |

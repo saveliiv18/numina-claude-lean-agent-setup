@@ -209,13 +209,13 @@ Pattern C: Complex (needs decomposition)
 │  CATEGORY 1: LIBRARY SEARCH (10 attempts minimum)                │
 │                                                                  │
 │  Tools (in order):                                               │
-│  1. lean_leandex  (semantic search - natural language)           │
+│  1. leanexplore  (semantic search - natural language)           │
 │  2. lean_loogle   (type pattern matching)                        │
 │  3. lean_local_search (fast confirmation)                        │
 │                                                                  │
 │  Pattern:                                                        │
-│  • Attempts 1-4: leandex with different phrasings                │
-│  • Attempts 5-6: leandex focusing on operation names             │
+│  • Attempts 1-4: leanexplore with different phrasings           │
+│  • Attempts 5-6: leanexplore focusing on operation names        │
 │  • Attempts 7-8: loogle with type patterns                       │
 │  • Attempts 9-10: Re-search with Gemini hints                    │
 └─────────────────────────────────────────────────────────────────┘
@@ -423,7 +423,7 @@ lemma name : statement := by
 
 ```
 SEARCH TOOLS (Library Lemmas):
-  1. leandex      (semantic search - natural language)
+  1. leanexplore (semantic search - natural language)
      ↓ (if not found)
   2. loogle       (type pattern matching)
      ↓ (if not found)
@@ -451,7 +451,7 @@ Before giving up, verify ALL boxes checked:
 [ ] Reached attempt budget (N >= budget)
 [ ] Tried all required categories (each ≥5 attempts)
 [ ] Consulted Gemini at ALL checkpoints (2, 4, 8, 16, 32)
-[ ] Searched mathlib thoroughly (leandex, loogle)
+[ ] Searched mathlib thoroughly (leanexplore, loogle)
 [ ] Tried hint and grind on every goal
 [ ] Tried both tactic mode and term mode
 [ ] Tried decomposing into helper lemmas

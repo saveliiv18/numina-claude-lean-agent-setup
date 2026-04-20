@@ -103,7 +103,7 @@
 
 - **Update blueprint immediately** after any progress
 - **Create agent logs** for every execution
-- **Follow common rules** (no axioms, hint/grind first, leandex before proving)
+- **Follow common rules** (no axioms, hint/grind first, leanexplore before proving)
 
 ### Ending a Session
 
@@ -120,7 +120,7 @@
 From `docs/prompts/common.md`:
 - ✅ Use `sorry`, never `axiom`
 - ✅ Update BLUEPRINT immediately after progress
-- ✅ Tool priority: leandex → loogle, hint → grind → manual
+- ✅ Tool priority: leanexplore → loogle, hint → grind → manual
 - ✅ Work in tmp files (proof agent)
 - ✅ Create agent logs for every execution
 - ✅ Status comment format on all lemmas
@@ -172,7 +172,7 @@ Contains shared rules:
 - No axioms policy
 - Blueprint synchronization
 - Status comment format
-- Tool priority order (leandex → loogle, hint → grind)
+- Tool priority order (leanexplore → loogle, hint → grind)
 - Tmp file workflow
 - Error response protocol
 - Agent log recording
@@ -203,7 +203,7 @@ Each agent has specialized instructions:
 **proof_agent.md** (REFACTORED):
 - Work in tmp files (PRIMARY workflow)
 - hint/grind FIRST (always)
-- leandex BEFORE proving (search first)
+- leanexplore BEFORE proving (search first)
 - 5 method categories (20-50 attempts)
 - Create agent logs
 
@@ -254,7 +254,7 @@ Each agent has specialized instructions:
 
 ### Search Tools (Use in Order)
 
-1. **leandex** (FIRST) - Semantic search, natural language
+1. **leanexplore** (FIRST) - Semantic search, natural language
    - "factorial of zero equals one"
    - "bijection preserves cardinality"
 
@@ -343,7 +343,7 @@ Blueprint: [lem:foo] (status: todo, formalized, clear statement)
 → Proof Agent:
   1. Creates tmp/tmp_foo.lean
   2. Tries hint/grind
-  3. Searches leandex
+  3. Searches leanexplore
   4. Proves in 14/20 attempts
   5. Copies to original
   6. Updates blueprint
@@ -397,7 +397,7 @@ This documentation system provides:
 - ✅ **Dependency-topology blueprints** (clearer ordering)
 - ✅ **Specialized agents** (blueprint agent for Gemini integration)
 - ✅ **Tmp file workflow** (keeps code clean)
-- ✅ **Tool priorities** (leandex → loogle, hint → grind)
+- ✅ **Tool priorities** (leanexplore → loogle, hint → grind)
 
 **Start here**: `docs/prompts/common.md`
 **Then read**: Agent-specific prompt for your role

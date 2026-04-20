@@ -322,7 +322,7 @@ For exact parameters of any tool, read `skills/<skill>/SKILL.md` and the corresp
 
 | Logical name | CLI invocation |
 |---|---|
-| `leandex` | `python skills/cli/leandex.py` |
+| `leanexplore` | `python skills/cli/leanexplore.py QUERY` |
 | `loogle` | `python skills/cli/loogle.py` |
 | `leanfinder` / `leansearch` | `python skills/cli/leanfinder.py` / `leansearch.py` |
 | `state-search` | `python skills/cli/state_search.py` |
@@ -339,19 +339,19 @@ Do NOT use `lake build` for per-file validation — always use `lean_check.py`.
 **ALWAYS search in this order:**
 
 ```
-1. leandex     (semantic search - natural language)
+1. leanexplore  (semantic search - natural language)
    ↓ (if not found)
-2. loogle      (type pattern matching)
+2. loogle        (type pattern matching)
    ↓ (if not found)
 3. leanfinder / leansearch  (alternative semantic search)
 ```
 
 ### Why This Order
-- **leandex**: Understands natural language, finds lemmas by concept
+- **leanexplore**: Understands natural language, finds lemmas by concept
   - Example: "factorial of zero equals one"
 - **loogle**: Requires exact type patterns, more precise but harder
   - Example: `?f (?x + ?y) = ?f ?x + ?f ?y`
-- **leanfinder / leansearch**: Alternative semantic search if leandex doesn't find it
+- **leanfinder / leansearch**: Alternative semantic search if leanexplore doesn't find it
 
 ### CRITICAL: Don't Give Up If Mathlib Doesn't Have It
 
@@ -420,7 +420,7 @@ theorem foo : P := by
 Only if both hint and grind fail:
 1. Read error message carefully
 2. Inspect diagnostics with `python skills/cli/lean_check.py <file>` (shows goals, hypotheses, and errors)
-3. Search for lemmas (leandex → loogle)
+3. Search for lemmas (leanexplore → loogle)
 4. Choose appropriate tactic manually
 
 ---
@@ -564,7 +564,7 @@ lemma foo : P := by
 | USE theorems that have `admit` | Leave sorry "because X has admit" | Treat existing `admit` as proven; your job is to complete YOUR proof |
 | Read & follow human comments | Delete human comments | Human comments contain proof strategy hints |
 | Use `/- (by claude) -/` comments | Use `-- comment` or unmarked `/- -/` | Distinguishes your comments from human's |
-| Search `leandex` first | Search `loogle` first | leandex uses natural language, easier syntax |
+| Search `leanexplore` first | Search `loogle` first | leanexplore uses natural language, easier syntax |
 | Try `hint` → `grind` first | Try manual tactics first | Automation often succeeds, saves time |
 | Update CHECKLIST immediately | Batch updates or delay | State goes stale if not synced |
 | Use structural position for tasks | Use line numbers | Line numbers change when code is modified |
@@ -588,7 +588,7 @@ All agents must follow these rules:
 6. ✅ Mark sorry with `--doing in tmp_xxx.lean`
 7. ✅ Work in tmp files for proof attempts
 8. ✅ Use lemma names to locate tasks (not line numbers)
-9. ✅ Search: leandex → loogle → leanfinder/leansearch
+9. ✅ Search: leanexplore → loogle → leanfinder/leansearch
 10. ✅ Tactics: hint → grind → manual
 11. ✅ Maintain informal solution files
 12. ✅ Create informal at task start (attempt 0), refine at 2^n attempts

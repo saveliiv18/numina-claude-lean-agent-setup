@@ -25,4 +25,4 @@ python skills/cli/leanfinder.py "⊢ Finset.sum s f ≤ Finset.sum s g" -n 8
 
 - Best for: natural language math statements, proof states, statement fragments.
 - Multiple targeted queries beat one complex query.
-- For exact pattern matching, prefer `loogle`. For identifier search, prefer `leandex`.
+- For exact pattern matching, prefer `loogle`. For identifier search, prefer `leanexplore`.
