@@ -65,7 +65,7 @@ echo "[5/5] Installing local CLI skills..."
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 SKILLS_SRC="$REPO_ROOT/skills"
 PROJECT_PATH="$PROJECT_DIR/$PROJECT_NAME"
-SKILLS_DST="$PROJECT_PATH/.claude/skills"
+SKILLS_DST="$REPO_ROOT/.claude/skills"
 
 if [ ! -d "$SKILLS_SRC" ]; then
     echo "Error: skills source not found at $SKILLS_SRC"
@@ -75,9 +75,8 @@ fi
 mkdir -p "$SKILLS_DST"
 for skill in code-transform llm search sorrifier verification; do
     if [ -d "$SKILLS_SRC/$skill" ]; then
-        echo "  installing $skill..."
-        rm -rf "$SKILLS_DST/$skill"
-        cp -r "$SKILLS_SRC/$skill" "$SKILLS_DST/"
+        echo "  linking $skill..."
+        ln -sfn "$SKILLS_SRC/$skill" "$SKILLS_DST/$skill"
     else
         echo "  warning: $skill not found in $SKILLS_SRC, skipping..."
     fi
@@ -89,12 +88,12 @@ echo "Setup complete!"
 echo "========================================"
 echo ""
 echo "To verify installation:"
-echo "  cd $PROJECT_PATH"
+echo "  cd $REPO_ROOT"
 echo "  claude"
 echo "  # then type /skills inside Claude Code"
 echo ""
 echo "To start working:"
-echo "  cd $PROJECT_PATH"
+echo "  cd $REPO_ROOT"
 echo "  claude"
 echo ""
 echo "For more details, see: tutorial/setup.md"

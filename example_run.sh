@@ -14,10 +14,18 @@ cd "$REPO_ROOT"
 # --- Reference resources (consumed by prompts/autosearch/main_entry.md) ---
 # main_entry.md reads this via `echo "$REFERENCE_RESOURCES"` and hands the
 # path(s) to each subagent. Use a colon-separated list for multiple paths.
+# Optional: leave empty or unset if you have no reference files.
 
-# substitute with real example resources path here
+# substitute with real example resources path here (or leave empty)
 export REFERENCE_RESOURCES="$REPO_ROOT/references/example_refs"
-# substitute with real mission path here
+
+# --- Target folder ---
+# The .lean file or folder the agent will work on. Overridden by the
+# [target_folder] CLI argument if provided. Must live inside a buildable
+# Lean project (an ancestor directory contains lakefile.lean / lakefile.toml
+# and the project has been built with `lake build`).
+
+# substitute with your target path here
 TARGET_FOLDER="$REPO_ROOT/leanproblems/test"
 ##############################################################################
 

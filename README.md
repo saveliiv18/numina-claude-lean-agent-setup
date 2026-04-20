@@ -32,6 +32,8 @@ cd numina-lean-agent/tutorial
 ./setup.sh YOUR_PROJECT_NAME
 ```
 
+Feel free to replace `YOUR_PROJECT_NAME` with any name you like (e.g. `myproofs`, `putnam2025`).
+
 
 If you prefer a manual installation or encounter any issues with the automatic script, please refer to the **[Tutorial: Setup Guide](tutorial/setup.md)** for detailed step-by-step instructions.
 
@@ -78,7 +80,7 @@ The CLI skills under `skills/cli/` call external services and need their own cre
 export GEMINI_API_KEY=xxx          # Required: discussion_partner, informal_prover (gemini), code_golf
 export LEAN_LEANDEX_API_KEY=xxx    # Required: leandex (semantic Mathlib search)
 export OPENAI_API_KEY=xxx          # Required only if you use informal_prover / discussion_partner with the gpt backend
-export AXLE_API_KEY=xxx            # Required only for axle commands (verify-proof, disprove, sorry2lemma, ...)
+export AXLE_API_KEY=xxx            # Optional: only needed for axle commands (verify-proof, disprove, sorry2lemma, ...)
 ```
 
 Once configured, the quickest way to try it out is:
@@ -87,7 +89,17 @@ Once configured, the quickest way to try it out is:
 bash ./example_run.sh [target_folder]
 ```
 
-This runs `from-folder` with the autosearch coordinator prompt, a timestamped `--result-dir`, `--max-rounds 10`, and the `REFERENCE_RESOURCES` env var pre-set. Edit the script to tweak defaults or switch between `run` / `batch` / `from-folder`.
+Before running, open `example_run.sh` and set the two variables at the top:
+
+| Variable | What it is | Example |
+|---|---|---|
+| `TARGET_FOLDER` | Path to the `.lean` file or folder you want the agent to work on. Overridden by the `[target_folder]` CLI argument. | `projects/myproofs/Foo.lean` |
+| `REFERENCE_RESOURCES` | Colon-separated path(s) to reference documents (papers, notes, prior proofs) that the agent can read for context. **Optional — leave it empty or unset if you have no reference files.** | `references/my_paper.pdf` |
+
+This runs `from-folder` with the autosearch coordinator prompt, a timestamped `--result-dir`, and `--max-rounds 10`. Edit the script to tweak defaults or switch between `run` / `batch` / `from-folder`.
+
+> [!IMPORTANT]
+> Feel free to point `[target_folder]` at any `.lean` file or directory of your choice. However, the target **must live inside a buildable Lean project**: an ancestor directory must contain a `lakefile.lean` or `lakefile.toml`, and the project must have been successfully built with `lake build`. Passing a standalone `.lean` file outside a Lake project will cause a `lake=fail` error.
 
 Per-task outputs (including an isolated `cli.log`, `cli_stats.json`, per-round JSON, and the raw Claude stream) land under `results/<run_id>/<task_id>/`. See the [Usage Guide](tutorial/usage.md#output) for the full layout.
 

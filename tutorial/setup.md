@@ -105,26 +105,30 @@ curl -fsSL https://claude.ai/install.sh | bash
 
 ### 5. Install CLI skills
 
-Copy the following folders under `numina-lean-agent/skills` into your project's `.claude/skills/` directory:
+Create symlinks from the **repo root's** `.claude/skills/` directory to `skills/` (not inside your Lean project). Using symlinks means skills stay up-to-date automatically whenever you `git pull`.
 
 ```bash
-mkdir -p .claude/skills #(If this folder not exist)
-cp -r /path/to/numina-lean-agent/skills/code-transform .claude/skills/
-cp -r /path/to/numina-lean-agent/skills/llm           .claude/skills/
-cp -r /path/to/numina-lean-agent/skills/search        .claude/skills/
-cp -r /path/to/numina-lean-agent/skills/sorrifier     .claude/skills/
-cp -r /path/to/numina-lean-agent/skills/verification  .claude/skills/
+cd /path/to/numina-lean-agent
+mkdir -p .claude/skills
+for skill in code-transform llm search sorrifier verification; do
+    ln -sfn "$(pwd)/skills/$skill" ".claude/skills/$skill"
+done
 ```
 
 After copying, your layout should look like:
 
 ```
-.claude/skills/
-    |- code-transform/
-    |- llm/
-    |- search/
-    |- sorrifier/
-    |- verification/
+numina-lean-agent/
+    |- .claude/
+    |   |- skills/
+    |       |- code-transform/
+    |       |- llm/
+    |       |- search/
+    |       |- sorrifier/
+    |       |- verification/
+    |- projects/
+    |   |- YOUR_PROJECT_NAME/   ← your Lean project lives here
+    ...
 ```
 
 To verify, open Claude Code in your project directory by running `claude`, then type `/skills`. If you see the following, the installation is successful:

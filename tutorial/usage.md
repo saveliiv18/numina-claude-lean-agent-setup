@@ -18,9 +18,9 @@ python -m scripts.run_claude <command> [options]
 >
 > If you skip this, the first invocation of the CLI skills (e.g. `lean_check.py`) will be noticeably slower because Lean still needs to compile/index dependencies on first use.
 
-> **Skills Setup (required):** Skills are loaded from the `.claude/skills/` directory **inside the Claude working directory** (`--cwd`, defaults to `.`). Make sure the five skills (`code-transform`, `llm`, `search`, `sorrifier`, `verification`) have been copied into that project's `.claude/skills/` — see `tutorial/setup.md` section 5, or run `tutorial/setup.sh`.
+> **Skills Setup (required):** Skills are loaded from the `.claude/skills/` directory in the **repo root** (not inside your Lean project). `tutorial/setup.sh` creates symlinks there automatically; if you set up manually, see `tutorial/setup.md` section 5. Because they are symlinks, skills stay up-to-date after every `git pull` with no reinstallation needed.
 >
-> Verify by running `claude` in that directory and typing `/skills`; you should see all five skills listed.
+> Verify by running `claude` from the repo root and typing `/skills`; you should see all five skills listed.
 
 > **Target must live inside a Lean project (required):** The target `.lean` file or folder you pass to `run` / `batch` / `from-folder` must be located **inside a Lean project** — i.e. some ancestor directory contains `lean-toolchain` and `lakefile.{lean,toml}`. The CLI skills (e.g. `lean_check.py`) walk up from the target to find the project root and invoke `lake env lean` there. A standalone `.lean` file outside any project will fail to compile.
 
