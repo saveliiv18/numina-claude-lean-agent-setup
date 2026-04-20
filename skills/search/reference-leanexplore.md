@@ -10,7 +10,7 @@ Searches Lean theorems/definitions using natural language, Lean terms, concept n
 python skills/cli/leanexplore.py QUERY [-n NUM_RESULTS]
 ```
 
-Thin wrapper around the `lean-explore` binary (`lean-explore search QUERY --limit N`) that logs every invocation to `cli.log`.
+Uses the `lean-explore` binary (`lean-explore search QUERY --limit N`) when `LEANEXPLORE_API_KEY` is set. If the binary is missing, the key is unset, or lean-explore returns an error, it automatically falls back to the Leandex HTTP API. Every invocation is logged to `cli.log`.
 
 | Argument | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -28,6 +28,7 @@ python skills/cli/leanexplore.py "{f : A → B} (hf : Injective f) : ∃ h, Bije
 
 ## Notes
 
+- Requires `LEANEXPLORE_API_KEY` env var for the `lean-explore` backend; automatically falls back to Leandex if unset or on error.
 - Works best when you phrase the query as a mathematical concept, a Lean identifier, or a partial type signature.
 - For proof-state-style queries, prefer `state-search` or `hammer-premise` instead.
 - **Limit**: Do NOT run more than 5 leanexplore queries in parallel.
