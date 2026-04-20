@@ -58,7 +58,7 @@ def search(query: str, num_results: int = 5) -> None:
     logger.info("leanexplore.search called: num_results=%d query=%r", num_results, query)
     binary = shutil.which("lean-explore")
 
-    if binary is not None:
+    if binary is not None and os.environ.get("LEANEXPLORE_API_KEY"):
         try:
             result = subprocess.run(
                 [binary, "search", query, "--limit", str(num_results)],
@@ -83,7 +83,10 @@ def search(query: str, num_results: int = 5) -> None:
         except Exception as e:
             logger.warning("lean-explore error (%s), falling back to leandex", e)
     else:
-        logger.warning("`lean-explore` not found on PATH, falling back to leandex")
+        if binary is None:
+            logger.warning("`lean-explore` not found on PATH, falling back to leandex")
+        else:
+            logger.warning("LEANEXPLORE_API_KEY not set, falling back to leandex")
 
     try:
         _search_via_leandex(query, num_results)
