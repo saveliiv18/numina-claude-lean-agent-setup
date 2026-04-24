@@ -588,6 +588,7 @@ dependencies = [
     { name = "fire" },
     { name = "lean-explore" },
     { name = "pyyaml" },
+    { name = "requests" },
 ]
 
 [package.metadata]
@@ -595,6 +596,7 @@ requires-dist = [
     { name = "fire", specifier = ">=0.7.1" },
     { name = "lean-explore", specifier = ">=1.2.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "requests", specifier = ">=2.32.3" },
 ]
 
 [[package]]

@@ -1,11 +1,6 @@
-**/__pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-experiments/
+.venv/
+.lake/
+results/
+__pycache__/
 *.log
-*.env.claude/
-
-.claude/
-.venv
-projects
+.env

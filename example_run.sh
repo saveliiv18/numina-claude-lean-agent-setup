@@ -17,7 +17,7 @@ cd "$REPO_ROOT"
 # Optional: leave empty or unset if you have no reference files.
 
 # substitute with real example resources path here (or leave empty)
-export REFERENCE_RESOURCES="$REPO_ROOT/references/example_refs"
+export REFERENCE_RESOURCES=""
 
 # --- Target folder ---
 # The .lean file or folder the agent will work on. Overridden by the
@@ -26,7 +26,7 @@ export REFERENCE_RESOURCES="$REPO_ROOT/references/example_refs"
 # and the project has been built with `lake build`).
 
 # substitute with your target path here
-TARGET_FOLDER="$REPO_ROOT/leanproblems/test"
+TARGET_FOLDER="$REPO_ROOT/projects/myproofs/Myproofs"
 ##############################################################################
 
 # --- Activate Python environment ---
